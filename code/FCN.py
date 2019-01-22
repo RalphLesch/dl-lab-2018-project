@@ -9,6 +9,8 @@ from loss import *
 from metrics import *
 from nets_definition import * 
 
+import psutil
+
 class FCN_SS(object):
 	def __init__(self):
 		pass
@@ -126,12 +128,22 @@ class FCN_SS(object):
 			self.img_height=opt.img_height
 			train_path = opt.dataset_dir + 'Train_data_' + opt.dataset + '.npy'
 			#print(train_path)
-			train_data = np.load(train_path)
+			train_label_path = opt.dataset_dir + 'Train_label_' + opt.dataset + '.npy' 
+			
+			# Load memory map the file from disk, if exceeding available momory
+			avail_mem = psutil.virtual_memory().available
+			train_size = os.path.getsize(train_path) - os.path.getsize(train_label_path)
+			if avail_mem - train_size > 1000000:
+				mmap_mode = None
+			else:
+				print('training data ({:n}MB) too big for available memory ({:n}MB), mapping to disk'.format(train_size // 1024**2, avail_mem // 1024**2))
+				mmap_mode = 'r'
+			train_data = np.load(train_path, mmap_mode=mmap_mode)
+			train_label = np.load(train_label_path, mmap_mode=mmap_mode)
+			
 			train_data = train_data.reshape((train_data.shape[0], opt.img_height, opt.img_width, 3))	
 			print(train_data.shape)
 			
-			train_label_path = opt.dataset_dir + 'Train_label_' + opt.dataset + '.npy' 
-			train_label =  np.load(train_label_path)
 			train_label = train_label.reshape((train_data.shape[0], opt.img_height*opt.img_width, 1))
 			# shape is (376, 50176, 12)
 			print(train_label.shape)

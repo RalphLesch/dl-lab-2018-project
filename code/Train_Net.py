@@ -9,6 +9,7 @@ import pprint
 
 from FCN import *
 
+
 flags = tf.app.flags
 flags.DEFINE_string("dataset_dir", "./data/", "Dataset directory default is data/")
 flags.DEFINE_string("checkpoint_dir", "./checkpoints/", "Directory name to save the checkpoints")
@@ -29,7 +30,7 @@ flags.DEFINE_string("dataset", "CamVid", "Choose dataset, options [Camvid, ...]"
 flags.DEFINE_integer("numberClasses", 12, "Number of classes to be predicted")
 flags.DEFINE_string("version_net", "FCN_Seg", "Version of the net")
 flags.DEFINE_integer("configuration", 4, "Set of configurations decoder [default is 4 - full decoder], other options are [1,2,3,4]")
-
+flags.DEFINE_string("augmentation", None, "Data augmentation [None (default), shape, color, all]")
 
 
 FLAGS = flags.FLAGS
@@ -50,6 +51,7 @@ def main(_):
 
 	# Call Train
 	FCN = FCN_SS()
+	FCN.Augmentation.random.seed(seed)
 	FCN.train(FLAGS)
 
 

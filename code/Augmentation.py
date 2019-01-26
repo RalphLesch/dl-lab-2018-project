@@ -1,6 +1,10 @@
 import random
 import numpy as np
-from scipy import special
+from scipy import special, stats
+from matplotlib import cm, pyplot as plt
+import tensorflow as tf
+
+
 
 class Augmentation(object):
 	#probability = 0
@@ -92,21 +96,45 @@ class Augmentation(object):
 
 # TODO: move to sub-class?
 
-def shape_mirror(self, data, label):
+def shape_mirror(self, data, label, index=None):
 	pass
-def shape_crop(self, data, label):
+def shape_crop(self, data, label, index=None):
 	pass
-def shape_cut(self, data, label):
+def shape_cut(self, data, label, index=None):
 	pass
-def shape_scale(self, data, label):
-	pass
+def shape_scale(self, data, label, index=None, scale_prob_factor=0.1):
+	'''Scales all images of the batch with a given index. If scale_factors and position are not specified random parameter values are drawn.'''
+
+	N, height, width, channels = data.get_shape().as_list()
+
+	# if index is not specified all images of the batch are rescaled
+	if index is None:
+		index = list(range(N))
+
+	# draw random scale values from truncated normal distribution
+	scales = 1 - random_trunc_exp(len(index), 0, 1, scale_prob_factor)
+	# draw random x and y positions of the rectangle from uniform distribution
+	positions = np.column_stack([random_unif(len(index), 0, 1), random_unif(len(index), 0, 1)])
+
+	# calculate corners of the rectangle that is used to rescale the image
+	y1 = (1 - scales) * positions[:,0]
+	y2 = 1 - (1 - scales) * (1 - positions[:,0])
+	x1 = (1 - scales) * positions[:,1]
+	x2 = 1 - (1 - scales) * (1 - positions[:,1])
+	boxes = np.column_stack([y1, x1, y2, x2])
+
+	# crop and resize the image by the calculated coordinates
+	data = tf.image.crop_and_resize(data, boxes, index, [height, width])
+	labels = tf.image.crop_and_resize(labels, boxes, index, [height, width])
+
+	return data, labels, (scales, boxes)
 
 
-def color_brightness(self, data, label):
+def color_brightness(self, data, label, index=None):
 	pass
-def color_contrast(self, data, label):
+def color_contrast(self, data, label, index=None):
 	pass
-def color_shift(self, data, label):
+def color_shift(self, data, label, index=None):
 	pass
 
 Augmentation.augment_types = {
@@ -122,3 +150,80 @@ Augmentation.augment_types = {
 		,'shift': color_shift
 	}
 }
+
+
+# ------------------------------------------------------------------------------
+# helper functions to plot a rgb or label image
+# TODO: move to subclass?
+
+def rgb_image(self, np_array, reverse_colors=True, color_range=(-128, 127)):
+	'''Converts a numpy array of shape (height, width, 3) into a RGB image.'''
+
+	n_colors = color_range[1] - color_range[0] + 1
+
+	# normalize colors into range 0 to 1
+	np_array -= color_range[0]
+	np_array /= n_colors
+
+	# flip color channels
+	if reverse_colors:
+		np_array = np_array[:,:,::-1]
+
+	return plt.imshow(np_array)
+
+def class_image(self, np_array, class_range=None):
+	'''Converts a numpy array of shape (height, width, 1) into an image with different colors for different classes.'''
+
+	# calculate range of different class labels
+	if class_range is None:
+		class_range = (np.min(np_array), np.max(np_array))
+
+	n_classes = class_range[1] - class_range[0] + 1
+
+	# normalize classes into range 0 to 1
+	np_array -= class_range[0]
+	np_array /= n_classes
+
+	# define colormap to distinguish different classes
+	colormap = cm.get_cmap(name='nipy_spectral', lut=n_classes).reversed()
+
+	return plt.imshow(np_array, cmap=colormap)
+
+# ------------------------------------------------------------------------------
+# helper functions to plot and draw samples from different distributions
+# TODO: move to subclass?
+
+def density_trunc_exp(self, lower, upper, scale):
+	'''Samples x and y values in order to plot the truncated exponential distribution with the given parameters.'''
+
+	b = (upper-lower) / scale
+	x = np.linspace(lower, upper, 100)
+	y = stats.truncexpon(b, loc=lower, scale=scale).pdf(x)
+	return x, y
+
+def random_trunc_exp(self, N, lower, upper, scale):
+	'''Draws N random values from the truncated exponential distribution.'''
+
+	b = (upper-lower) / scale
+	return stats.truncexpon(b, loc=lower, scale=scale).rvs(N)
+
+def density_trunc_norm(self, lower, upper, mean, std):
+	'''Samples x and y values in order to plot the truncated normal distribution with the given parameters.'''
+
+	a = (lower - mean) / std
+	b = (upper - mean) / std
+	x = np.linspace(lower, upper, 100)
+	y = stats.truncnorm(a, b, loc=mean, scale=std).pdf(x)
+	return x, y
+
+def random_trunc_norm(self, N, lower, upper, mean, std):
+	'''Draws N random values from the truncated exponential distribution.'''
+
+	a = (lower - mean) / std
+	b = (upper - mean) / std
+	return stats.truncnorm(a, b, loc=mean, scale=std).rvs(N)
+
+def random_unif(self, N, lower, upper):
+	'''Draws N random values between lower and upper from the uniform distribution.'''
+
+	return stats.uniform(loc=lower, scale=upper-lower).rvs(N)

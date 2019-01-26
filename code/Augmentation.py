@@ -1,4 +1,6 @@
 import random
+import numpy as np
+from scipy import special
 
 class Augmentation(object):
 	#probability = 0
@@ -38,7 +40,7 @@ class Augmentation(object):
 			self.random_augmentation_of_type(self._type, data, label, self.probability)
 
 		#return data, label
-	
+
 	def calculate_probability(self, base_probability, n_elements):
 		''' Calculate probablility for each augmentation (or type).'''
 

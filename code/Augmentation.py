@@ -28,8 +28,19 @@ class Augmentation(object):
 			raise ValueError("type '{}' is invalid, must be one of {}".format(aug_type, [None, 'all', *self.augment_types]))
 		self._type = aug_type
 
-	def augment(self, data, label):
-		'''Augment the data and label (in place) with the set probability and type.'''
+	def augment_batch(self, data, label):
+		'''Apply random augmentations to all the images of the data and label batches.'''
+
+		N, height, width, channels = data.shape
+
+		for i in range(N):
+			data[i,:,:,:], label[i,:,:,:] = self.augment_img(data[i,:,:,:], label[i,:,:,:])
+
+		return data, label
+
+
+	def augment_img(self, data, label):
+		'''Augment the data and label with the set probability and type.'''
 
 		#print('AUGMENTATION: ', self.type)
 
@@ -40,11 +51,11 @@ class Augmentation(object):
 			# Probability per type
 			p_type = self.calculate_probability(self.probability, len(self.augment_types))
 			for t in self.augment_types:
-				self.random_augmentation_of_type(t, data, label, p_type)
+				data, label = self.random_augmentation_of_type(t, data, label, p_type)
 		else:
-			self.random_augmentation_of_type(self._type, data, label, self.probability)
+			data, label = self.random_augmentation_of_type(self._type, data, label, self.probability)
 
-		#return data, label
+		return data, label
 
 	def calculate_probability(self, base_probability, n_elements):
 		''' Calculate probablility for each augmentation (or type).'''
@@ -61,20 +72,21 @@ class Augmentation(object):
 		return roots[0]
 
 	def random_augmentation_of_type(self, aug_type, data, label, probability):
-		''' Apply random augmentation of the given type (see augment_types) to data and label
-			(changed in place), with the given base probability.
-		'''
+		''' Apply random augmentation of the given type (see augment_types) to data and label, with the given base probability.'''
+
 		t = self.augment_types[aug_type]
 		# Probability for each augmentation.
 		p_augment = self.calculate_probability(probability, len(t))
 		augmentations = list(t.keys())
-		self.random.shuffle(augmentations)
+		self.rand.shuffle(augmentations)
 		for a_index in augmentations:
 			augmentation = t[a_index]
 			i = self.rand.random_unif(1, 0, 1)[0]
 			if i < p_augment:
-				#data, label = augmentation(data, label)
+				data, label = augmentation(data, label)
 				print('augment: ' + a_index)
+
+		return data, label
 
 	#class augment_types(object):
 	#	class shape:
@@ -97,46 +109,92 @@ class Augmentation(object):
 
 # TODO: move to sub-class?
 
-def shape_mirror(self, data, label, index=None):
-	pass
-def shape_crop(self, data, label, index=None):
-	pass
-def shape_cut(self, data, label, index=None):
-	pass
-def shape_scale(self, data, label, index=None, scale_prob_factor=0.1):
-	'''Scales all images of the batch with a given index. If scale_factors and position are not specified random parameter values are drawn.'''
+def shape_mirror(self, data, label):
+	'''Flips an image of the data and label batches horizontally.'''
 
-	N, height, width, channels = data.get_shape().as_list()
+	return np.flip(data, 1), np.flip(label, 1)
 
-	# if index is not specified all images of the batch are rescaled
-	if index is None:
-		index = list(range(N))
+def shape_crop(data, label, scale_prob_factor=0.1, replace=-128):
+	'''Crops an image of the data batch to a smaller rectangle padding the margin with 'replace'. The 'scale_prob_factor' determines the shape of the exponential distribution from which the scaling factor is drawn (higher values mean a smaller rectangle to which the image is cropped).'''
+
+	height, width, channels = data.shape
 
 	# draw random scale values from truncated normal distribution
-	scales = 1 - self.rand.random_trunc_exp(len(index), 0, 1, scale_prob_factor)
-	# draw random x and y positions of the rectangle from uniform distribution
-	positions = np.column_stack([self.rand.random_unif(len(index), 0, 1), self.rand.random_unif(len(index), 0, 1)])
+	scale_x = 1 - self.rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
+	scale_y = 1 - self.rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
 
-	# calculate corners of the rectangle that is used to rescale the image
-	y1 = (1 - scales) * positions[:,0]
-	y2 = 1 - (1 - scales) * (1 - positions[:,0])
-	x1 = (1 - scales) * positions[:,1]
-	x2 = 1 - (1 - scales) * (1 - positions[:,1])
-	boxes = np.column_stack([y1, x1, y2, x2])
+	# draw random x and y positions for the corners of the rectangle that is used to crop the image
+	x1 = int(self.rand.random_unif(1, 0, 1)[0] * (1 - scale_x) * width)
+	y1 = int(self.rand.random_unif(1, 0, 1)[0] * (1 - scale_y) * height)
+	x2 = int(x1 + scale_x * width)
+	y2 = int(y1 + scale_y * height)
 
-	# crop and resize the image by the calculated coordinates
-	data = tf.image.crop_and_resize(data, boxes, index, [height, width])
-	labels = tf.image.crop_and_resize(labels, boxes, index, [height, width])
+	# crop image to the calculated rectangle and pad with replacement value
+	data[:y1, :, :] = replace
+	data[y2:, :, :] = replace
+	data[:, :x1, :] = replace
+	data[:, x2:, :] = replace
 
-	return data, labels, (scales, boxes)
+	return data, label
+
+
+def shape_cut(data, label, scale_prob_factor=0.25, replace=-128):
+	'''Cuts out a rectangle from an image of the data batch and overwrites the values with 'replace'. The 'scale_prob_factor' determines the shape of the exponential distribution from which the scaling factor is drawn (higher values mean a larger rectangle which is replaced).'''
+
+	height, width, channels = data.shape
+
+	# draw random scale values from truncated normal distribution
+	scale_x = self.rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
+	scale_y = self.rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
+
+	# draw random x and y positions for the corners of the rectangle that is replaced
+	x1 = int(self.rand.random_unif(1, 0, 1)[0] * (1 - scale_x) * width)
+	y1 = int(self.rand.random_unif(1, 0, 1)[0] * (1 - scale_y) * height)
+	x2 = int(x1 + scale_x * width)
+	y2 = int(y1 + scale_y * height)
+
+	# cut out rectangle and replace values
+	data[y1:y2, x1:x2, :] = replace
+
+	return data, label
+
+
+def shape_scale(self, data, label, scale_prob_factor=0.1):
+	'''Rescales an image of the data and label batches. The 'scale_prob_factor' determines the shape of the exponential distribution from which the scaling factor is drawn (higher values mean a smaller square to which the image is zoomed).'''
+
+	height, width, channels = data.shape
+
+	# draw random scale value from truncated normal distribution
+	scale = 1 - self.rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
+
+	# draw random x and y positions for the corners of the square that is used to crop the image
+	x1 = int(self.rand.random_unif(1, 0, 1)[0] * (1 - scale) * width)
+	y1 = int(self.rand.random_unif(1, 0, 1)[0] * (1 - scale) * height)
+	x2 = int(x1 + scale * width)
+	y2 = int(y1 + scale * height)
+
+	# crop image to the calculated square
+	data = data[y1:y2, x1:x2, :]
+	label = label[y1:y2, x1:x2, :]
+
+	# resize image to the original height and width
+	cv.resize(data, dsize=(height, width), interpolation=cv.INTER_LINEAR)
+	cv.resize(label, dsize=(height, width), interpolation=cv.INTER_NEAREST)
+
+	return data, label
 
 
 def color_brightness(self, data, label, index=None):
-	pass
+	return data, label
+
+
 def color_contrast(self, data, label, index=None):
-	pass
+	return data, label
+
+
 def color_shift(self, data, label, index=None):
-	pass
+	return data, label
+
 
 Augmentation.augment_types = {
 	'shape': {

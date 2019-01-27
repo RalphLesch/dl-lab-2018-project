@@ -14,7 +14,7 @@ from Augmentation import Augmentation
 
 class FCN_SS(object):
 	def __init__(self):
-		self.Augmentation = Augmentation() # TODO: add opt parameters
+		self.Augmentation = Augmentation(aug_type='all', seed=1) # TODO: add opt parameters
 
 	def build_train_graph(self):
 		opt=self.opt
@@ -279,7 +279,13 @@ class FCN_SS(object):
 
 				#train_image_batch, train_label_batch = self.Create_batches(train_data, train_label)
 				train_image_batch, train_label_batch = self.Create_batches(train_data, train_label)
-				train_data, train_label = self.Augmentation.augment_batch(train_data, train_label)
+
+
+				train_label_batch = train_label_batch.reshape((self.batch_size, opt.img_height,  opt.img_width, 12))
+
+				train_image_batch, train_label_batch = self.Augmentation.augment_batch(train_image_batch, train_label_batch)
+
+				train_label_batch = train_label_batch.reshape((self.batch_size, opt.img_height * opt.img_width, 12))
 
 
 				#train_image_batch_ = np.reshape(train_image_batch, (opt.batch_size, opt.img_height*opt.img_width*3))

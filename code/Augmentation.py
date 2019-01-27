@@ -34,7 +34,7 @@ class Augmentation(object):
 		N, height, width, channels = data.shape
 
 		for i in range(N):
-			data[i,:,:,:], label[i,:,:,:] = self.augment_img(data[i,:,:,:], label[i,:,:,:])
+			x,y = self.augment_img(data[i,:,:,:], label[i,:,:,:])
 
 		return data, label
 
@@ -45,7 +45,7 @@ class Augmentation(object):
 		#print('AUGMENTATION: ', self.type)
 
 		if self._type is None:
-			return
+			return data, label
 		if self._type == 'all':
 			# TODO: include no augmentation
 			# Probability per type

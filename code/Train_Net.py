@@ -51,7 +51,6 @@ def main(_):
 
 	# Call Train
 	FCN = FCN_SS()
-	FCN.Augmentation.random.seed(seed)
 	FCN.train(FLAGS)
 
 

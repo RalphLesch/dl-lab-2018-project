@@ -1,9 +1,9 @@
 import random
 import numpy as np
-from scipy import special, stats
+from scipy import special
 from matplotlib import cm, pyplot as plt
 import tensorflow as tf
-
+from RandomParam import RandomParam
 
 
 class Augmentation(object):
@@ -13,9 +13,10 @@ class Augmentation(object):
 	def __init__(self, aug_type=None, probability=0.5, seed=None):
 		self.type = aug_type
 		self.probability = probability
-		self.random = random.Random()
-		if seed is not None:
-			self.random.seed(seed)
+		# self.random = random.Random()
+		# if seed is not None:
+		# 	self.random.seed(seed)
+		self.rand = RandomParam(seed)
 
 	@property
 	def type(self):
@@ -52,7 +53,7 @@ class Augmentation(object):
 		coefs = [-base_probability] + [special.binom(n_elements, k) * (-1)**(k+1) for k in range(1, n+1)]
 		coefs.reverse()
 
-		# calculate real valued roots of the polynomial between 0 and 1 (representing a the probability of P(A) = P(B))
+		# calculate real valued roots of the polynomial between 0 and 1 (representing the probability of P(A))
 		roots = np.roots(coefs)
 		roots = np.real(roots[np.isreal(roots)])
 		roots = roots[(roots > 0.0) & (roots < 1.0)]
@@ -70,7 +71,7 @@ class Augmentation(object):
 		self.random.shuffle(augmentations)
 		for a_index in augmentations:
 			augmentation = t[a_index]
-			i = self.random.randint(0, 1)
+			i = self.rand.random_unif(1, 0, 1)[0]
 			if i < p_augment:
 				#data, label = augmentation(data, label)
 				print('augment: ' + a_index)
@@ -112,9 +113,9 @@ def shape_scale(self, data, label, index=None, scale_prob_factor=0.1):
 		index = list(range(N))
 
 	# draw random scale values from truncated normal distribution
-	scales = 1 - random_trunc_exp(len(index), 0, 1, scale_prob_factor)
+	scales = 1 - self.rand.random_trunc_exp(len(index), 0, 1, scale_prob_factor)
 	# draw random x and y positions of the rectangle from uniform distribution
-	positions = np.column_stack([random_unif(len(index), 0, 1), random_unif(len(index), 0, 1)])
+	positions = np.column_stack([self.rand.random_unif(len(index), 0, 1), self.rand.random_unif(len(index), 0, 1)])
 
 	# calculate corners of the rectangle that is used to rescale the image
 	y1 = (1 - scales) * positions[:,0]
@@ -188,42 +189,3 @@ def class_image(self, np_array, class_range=None):
 	colormap = cm.get_cmap(name='nipy_spectral', lut=n_classes).reversed()
 
 	return plt.imshow(np_array, cmap=colormap)
-
-# ------------------------------------------------------------------------------
-# helper functions to plot and draw samples from different distributions
-# TODO: move to subclass?
-
-def density_trunc_exp(self, lower, upper, scale):
-	'''Samples x and y values in order to plot the truncated exponential distribution with the given parameters.'''
-
-	b = (upper-lower) / scale
-	x = np.linspace(lower, upper, 100)
-	y = stats.truncexpon(b, loc=lower, scale=scale).pdf(x)
-	return x, y
-
-def random_trunc_exp(self, N, lower, upper, scale):
-	'''Draws N random values from the truncated exponential distribution.'''
-
-	b = (upper-lower) / scale
-	return stats.truncexpon(b, loc=lower, scale=scale).rvs(N)
-
-def density_trunc_norm(self, lower, upper, mean, std):
-	'''Samples x and y values in order to plot the truncated normal distribution with the given parameters.'''
-
-	a = (lower - mean) / std
-	b = (upper - mean) / std
-	x = np.linspace(lower, upper, 100)
-	y = stats.truncnorm(a, b, loc=mean, scale=std).pdf(x)
-	return x, y
-
-def random_trunc_norm(self, N, lower, upper, mean, std):
-	'''Draws N random values from the truncated exponential distribution.'''
-
-	a = (lower - mean) / std
-	b = (upper - mean) / std
-	return stats.truncnorm(a, b, loc=mean, scale=std).rvs(N)
-
-def random_unif(self, N, lower, upper):
-	'''Draws N random values between lower and upper from the uniform distribution.'''
-
-	return stats.uniform(loc=lower, scale=upper-lower).rvs(N)

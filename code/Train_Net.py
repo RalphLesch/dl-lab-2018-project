@@ -50,7 +50,7 @@ def main(_):
 		os.makedirs(FLAGS.checkpoint_dir)
 
 	# Call Train
-	FCN = FCN_SS()
+	FCN = FCN_SS(seed)  # Initializes Augmentation with the same seed, aswell.
 	FCN.train(FLAGS)
 
 

@@ -3,8 +3,8 @@ import numpy as np
 from scipy import special
 from matplotlib import cm, pyplot as plt
 import tensorflow as tf
+import cv2 as cv
 from RandomParam import RandomParam
-
 
 class Augmentation(object):
 	#probability = 0
@@ -12,7 +12,7 @@ class Augmentation(object):
 	tf_session = None
 	
 	def __init__(self, aug_type=None, probability=0.5, seed=None):
-		self.augmentations = {'shape': Shape(), 'color': Color()}
+		self.augmentations = {'shape': Shape(self), 'color': Color(self)}
 		self.type = aug_type
 		self.probability = probability
 		# self.random = random.Random()
@@ -87,18 +87,19 @@ class Augmentation(object):
 			i = self.rand.random_unif(1, 0, 1)[0]
 			if i < p_augment:
 				print('augment:', a_index, augmentation)
-				data, label = augmentation(self, data, label) # TODO: fix self change!
+				data, label = augmentation(data, label)
 
 		return data, label
-
 
 # Augmentation types and functions
 
 class Augment_Type(dict):
-	def __init__(self):
+	def __init__(self, outer=None):
+		self.outer = outer # Reference to outer class.
 		# Set all public methods as mapping/dict.
-		super().__init__({k: v for k, v in self.__class__.__dict__.items() if callable(v) and not k.startswith('_')})
-	
+		#super().__init__({k: v for k, v in self.__class__.__dict__.items() if callable(v) and not k.startswith('_')})
+		super().__init__({k: v for k in self.__class__.__dict__ for v in [getattr(self, k)] if not k.startswith('_') and callable(v)})
+
 
 class Shape(Augment_Type):
 
@@ -111,14 +112,15 @@ class Shape(Augment_Type):
 		'''Crops an image of the data batch to a smaller rectangle padding the margin with 'replace'. The 'scale_prob_factor' determines the shape of the exponential distribution from which the scaling factor is drawn (higher values mean a smaller rectangle to which the image is cropped).'''
 
 		height, width, channels = data.shape
+		rand = self.outer.rand
 
 		# draw random scale values from truncated normal distribution
-		scale_x = 1 - self.rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
-		scale_y = 1 - self.rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
+		scale_x = 1 - rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
+		scale_y = 1 - rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
 
 		# draw random x and y positions for the corners of the rectangle that is used to crop the image
-		x1 = int(self.rand.random_unif(1, 0, 1)[0] * (1 - scale_x) * width)
-		y1 = int(self.rand.random_unif(1, 0, 1)[0] * (1 - scale_y) * height)
+		x1 = int(rand.random_unif(1, 0, 1)[0] * (1 - scale_x) * width)
+		y1 = int(rand.random_unif(1, 0, 1)[0] * (1 - scale_y) * height)
 		x2 = int(x1 + scale_x * width)
 		y2 = int(y1 + scale_y * height)
 
@@ -135,18 +137,20 @@ class Shape(Augment_Type):
 		'''Cuts out a rectangle from an image of the data batch and overwrites the values with 'replace'. The 'scale_prob_factor' determines the shape of the exponential distribution from which the scaling factor is drawn (higher values mean a larger rectangle which is replaced).'''
 
 		height, width, channels = data.shape
+		rand = self.outer.rand
 
 		# draw random scale values from truncated normal distribution
-		scale_x = self.rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
-		scale_y = self.rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
+		scale_x = rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
+		scale_y = rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
 
 		# draw random x and y positions for the corners of the rectangle that is replaced
-		x1 = int(self.rand.random_unif(1, 0, 1)[0] * (1 - scale_x) * width)
-		y1 = int(self.rand.random_unif(1, 0, 1)[0] * (1 - scale_y) * height)
+		x1 = int(rand.random_unif(1, 0, 1)[0] * (1 - scale_x) * width)
+		y1 = int(rand.random_unif(1, 0, 1)[0] * (1 - scale_y) * height)
 		x2 = int(x1 + scale_x * width)
 		y2 = int(y1 + scale_y * height)
 
 		# cut out rectangle and replace values
+		# TODO: BUG! Cannot assign to read only memory mapped data (numpy mmap_mode='r')
 		data[y1:y2, x1:x2, :] = replace
 
 		return data, label
@@ -156,13 +160,14 @@ class Shape(Augment_Type):
 		'''Rescales an image of the data and label batches. The 'scale_prob_factor' determines the shape of the exponential distribution from which the scaling factor is drawn (higher values mean a smaller square to which the image is zoomed).'''
 
 		height, width, channels = data.shape
+		rand = self.outer.rand
 
 		# draw random scale value from truncated normal distribution
-		scale = 1 - self.rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
+		scale = 1 - self.outer.rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
 
 		# draw random x and y positions for the corners of the square that is used to crop the image
-		x1 = int(self.rand.random_unif(1, 0, 1)[0] * (1 - scale) * width)
-		y1 = int(self.rand.random_unif(1, 0, 1)[0] * (1 - scale) * height)
+		x1 = int(rand.random_unif(1, 0, 1)[0] * (1 - scale) * width)
+		y1 = int(rand.random_unif(1, 0, 1)[0] * (1 - scale) * height)
 		x2 = int(x1 + scale * width)
 		y2 = int(y1 + scale * height)
 
@@ -171,21 +176,31 @@ class Shape(Augment_Type):
 		label = label[y1:y2, x1:x2, :]
 
 		# resize image to the original height and width
-		# TODO: BUG! OpenCV?
-		#cv.resize(data, dsize=(height, width), interpolation=cv.INTER_LINEAR)
-		#cv.resize(label, dsize=(height, width), interpolation=cv.INTER_NEAREST)
+		# TODO: OpenCV?
+		cv.resize(data, dsize=(height, width), interpolation=cv.INTER_LINEAR)
+		cv.resize(label, dsize=(height, width), interpolation=cv.INTER_NEAREST)
 
 		return data, label
 
 
 class Color(Augment_Type):
-	maxdelta = 0.8
+	brightness_max_delta = 0.8
+	contrast_max_delta = 0.8
+	shift_max_delta = 0.8
 	
 	def brightness(self, data, label):
+		#tf.image.random_brightness(data, self.maxdelta, seed=?)
+		# TODO: use random_brightness / tf...random_uniform / tf.truncated_normal?
+		data = tf.image.adjust_brightness(data, self.outer.rand.random_unif(1, -self.brightness_max_delta, self.brightness_max_delta)[0])
+		data = self.outer.tf_session.run(data) # TODO: avoid by using tensors and process in outer session call.
 		return data, label
 	def contrast(self, data, label):
+		data = tf.image.adjust_contrast(data, self.outer.rand.random_unif(1, -self.contrast_max_delta, self.contrast_max_delta)[0])
+		data = self.outer.tf_session.run(data)
 		return data, label
 	def shift(self, data, label):
+		data = tf.image.adjust_hue(data, self.outer.rand.random_unif(1, -self.shift_max_delta, self.shift_max_delta)[0])
+		data = self.outer.tf_session.run(data)
 		return data, label
 
 

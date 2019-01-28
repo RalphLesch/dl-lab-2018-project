@@ -36,11 +36,14 @@ class Augmentation(object):
 
 		N, height, width, channels = data.shape
 
+		augmentation_infos = []
+
 		for i in range(N):
 			print('image', i)
-			data[i,:,:,:], label[i,:,:,:] = self.augment_img(data[i,:,:,:], label[i,:,:,:])
+			data[i,:,:,:], label[i,:,:,:], infos = self.augment_img(data[i,:,:,:], label[i,:,:,:])
+			augmentation_infos.add(infos)
 
-		return data, label
+		return data, label, augmentation_infos
 
 
 	def augment_img(self, data, label):
@@ -48,18 +51,22 @@ class Augmentation(object):
 
 		#print('AUGMENTATION: ', self.type)
 
+		infos = dict()
+
 		if self._type is None:
-			return data, label
+			return data, label, infos
 		if self._type == 'all':
 			# TODO: include no augmentation
 			# Probability per typ
 			p_type = self.calculate_probability(self.probability, len(self.augmentations))
 			for t in self.augmentations:
-				data, label = self.random_augmentation_of_type(t, data, label, p_type)
+				data, label, info = self.random_augmentation_of_type(t, data, label, p_type)
+				infos.update(info)
 		else:
-			data, label = self.random_augmentation_of_type(self._type, data, label, self.probability)
+			data, label, infos = self.random_augmentation_of_type(self._type, data, label, self.probability)
 
-		return data, label
+		return data, label, infos
+
 
 	def calculate_probability(self, base_probability, n_elements):
 		''' Calculate probablility for each augmentation (or type).'''
@@ -83,14 +90,19 @@ class Augmentation(object):
 		p_augment = self.calculate_probability(probability, len(t))
 		augmentations = list(t.keys())
 		self.rand.shuffle(augmentations)
+
+		# save informations about the augmentation types and their parameters
+		info = dict()
+
 		for a_index in augmentations:
 			augmentation = t[a_index]
 			i = self.rand.random_unif(1, 0, 1)[0]
 			if i < p_augment:
-				print('    augment:', a_index)
-				data, label = augmentation(data, label)
+				# print('    augment:', a_index)
+				data, label, params = augmentation(data, label)
+				info[a_index] = params
 
-		return data, label
+		return data, label, info
 
 	# ------------------------------------------------------------------------------
 	# helper functions to plot a rgb or label image
@@ -98,6 +110,8 @@ class Augmentation(object):
 
 	def rgb_image(self, np_array, reverse_colors=True, color_range=(-128, 127)):
 		'''Converts a numpy array of shape (height, width, 3) into a RGB image.'''
+
+		np_array = np_array.copy()
 
 		n_colors = color_range[1] - color_range[0] + 1
 
@@ -119,6 +133,8 @@ class Augmentation(object):
 			class_range = (np.min(np_array), np.max(np_array))
 
 		n_classes = class_range[1] - class_range[0] + 1
+
+		np_array = np_array[:,:,0].copy()
 
 		# normalize classes into range 0 to 1
 		np_array -= class_range[0]
@@ -143,14 +159,17 @@ class Shape(Augment_Type):
 
 	def mirror(self, data, label):
 		'''Flips an image of the data and label batches horizontally.'''
-		print(data[0:5,0:5,1])
 		data = data[:,::-1,:]
-		print(data[0:5,0:5,1])
 		label = label[:,::-1,:]
-		return data, label
+
+		params = { "flip" : True }
+
+		return data, label, params
 
 	def crop(self, data, label, scale_prob_factor=0.1, replace=-128):
 		'''Crops an image of the data batch to a smaller rectangle padding the margin with 'replace'. The 'scale_prob_factor' determines the shape of the exponential distribution from which the scaling factor is drawn (higher values mean a smaller rectangle to which the image is cropped).'''
+
+		data = data.copy()
 
 		height, width, channels = data.shape
 		rand = self.outer.rand
@@ -165,17 +184,21 @@ class Shape(Augment_Type):
 		x2 = int(x1 + scale_x * width)
 		y2 = int(y1 + scale_y * height)
 
+		params = { "factor_x" : scale_x, "factor_y" : scale_y, "box" : [[x1, y1], [x1, y2], [x2, y2], [x2, y1]] }
+
 		# crop image to the calculated rectangle and pad with replacement value
 		data[:y1, :, :] = replace
 		data[y2:, :, :] = replace
 		data[:, :x1, :] = replace
 		data[:, x2:, :] = replace
 
-		return data, label
+		return data, label, params
 
 
 	def cut(self, data, label, scale_prob_factor=0.25, replace=-128):
 		'''Cuts out a rectangle from an image of the data batch and overwrites the values with 'replace'. The 'scale_prob_factor' determines the shape of the exponential distribution from which the scaling factor is drawn (higher values mean a larger rectangle which is replaced).'''
+
+		data = data.copy()
 
 		height, width, channels = data.shape
 		rand = self.outer.rand
@@ -190,15 +213,20 @@ class Shape(Augment_Type):
 		x2 = int(x1 + scale_x * width)
 		y2 = int(y1 + scale_y * height)
 
+		params = { "factor_x" : scale_x, "factor_y" : scale_y, "box" : [[x1, y1], [x1, y2], [x2, y2], [x2, y1]] }
+
 		# cut out rectangle and replace values
 		# TODO: BUG! Cannot assign to read only memory mapped data (numpy mmap_mode='r')
 		data[y1:y2, x1:x2, :] = replace
 
-		return data, label
+		return data, label, params
 
 
 	def scale(self, data, label, scale_prob_factor=0.1):
 		'''Rescales an image of the data and label batches. The 'scale_prob_factor' determines the shape of the exponential distribution from which the scaling factor is drawn (higher values mean a smaller square to which the image is zoomed).'''
+
+		data = data.copy()
+		label = label.copy()
 
 		height, width, channels = data.shape
 		rand = self.outer.rand
@@ -216,30 +244,47 @@ class Shape(Augment_Type):
 		data = data[y1:y2, x1:x2, :]
 		label = label[y1:y2, x1:x2, :]
 
+		params = { "factor" : scale, "box" : [[x1, y1], [x1, y2], [x2, y2], [x2, y1]] }
+
 		# resize image to the original height and width
 		# TODO: OpenCV?
 		data = cv.resize(data, dsize=(height, width), interpolation=cv.INTER_LINEAR)
 		label = cv.resize(label, dsize=(height, width), interpolation=cv.INTER_NEAREST)[:,:,None]
 
-		return data, label
+		return data, label, params
 
 
 class Color(Augment_Type):
+	brightness_deviation = 0.1
 	brightness_max_delta = 0.8
-	contrast_max_delta = 0.8
+	contrast_deviation = 0.1
 	shift_max_delta = 0.8
+	shift_deviation = 0.05
 
 	def brightness(self, data, label):
 		#tf.image.random_brightness(data, self.maxdelta, seed=?)
 		# TODO: use random_brightness / tf...random_uniform / tf.truncated_normal?
-		data = tf.image.adjust_brightness(data, self.outer.rand.random_unif(1, -self.brightness_max_delta, self.brightness_max_delta)[0])
+		delta = self.outer.rand.random_trunc_norm(1, -self.brightness_max_delta, self.brightness_max_delta, 0, self.brightness_deviation)[0]
+		data = tf.image.adjust_brightness(data, delta)
 		data = self.outer.tf_session.run(data) # TODO: avoid by using tensors and process in outer session call.
-		return data, label
+		params = { "delta" : delta }
+
+		return data, label, params
+
 	def contrast(self, data, label):
-		data = tf.image.adjust_contrast(data, self.outer.rand.random_unif(1, -self.contrast_max_delta, self.contrast_max_delta)[0])
+
+		delta = 1 - self.outer.rand.random_trunc_exp(1, 0, 1, self.contrast_deviation)[0]
+		data = tf.image.adjust_contrast(data, delta)
 		data = self.outer.tf_session.run(data)
-		return data, label
+		params = { "delta" : delta }
+
+		return data, label, params
+
 	def shift(self, data, label):
-		data = tf.image.adjust_hue(data, self.outer.rand.random_unif(1, -self.shift_max_delta, self.shift_max_delta)[0])
+
+		delta = self.outer.rand.random_trunc_norm(1, -self.shift_max_delta, self.shift_max_delta, 0, self.shift_deviation)[0]
+		data = tf.image.adjust_hue(data, delta)
 		data = self.outer.tf_session.run(data)
-		return data, label
+		params = { "delta" : delta }
+
+		return data, label, params

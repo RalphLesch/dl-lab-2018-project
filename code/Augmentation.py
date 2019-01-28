@@ -11,7 +11,7 @@ class Augmentation(object):
 	#random = None
 	tf_session = None
 
-	def __init__(self, aug_type=None, probability=0.5, seed=None):
+	def __init__(self, aug_type=None, probability=0.9, seed=None):
 		self.augmentations = {'shape': Shape(self), 'color': Color(self)}
 		self.type = aug_type
 		self.probability = probability
@@ -41,7 +41,7 @@ class Augmentation(object):
 		for i in range(N):
 			print('image', i)
 			data[i,:,:,:], label[i,:,:,:], infos = self.augment_img(data[i,:,:,:], label[i,:,:,:])
-			augmentation_infos.add(infos)
+			augmentation_infos.append(infos)
 
 		return data, label, augmentation_infos
 
@@ -134,7 +134,7 @@ class Augmentation(object):
 
 		n_classes = class_range[1] - class_range[0] + 1
 
-		np_array = np_array[:,:,0].copy()
+		np_array = np_array.copy()
 
 		# normalize classes into range 0 to 1
 		np_array -= class_range[0]
@@ -160,7 +160,7 @@ class Shape(Augment_Type):
 	def mirror(self, data, label):
 		'''Flips an image of the data and label batches horizontally.'''
 		data = data[:,::-1,:]
-		label = label[:,::-1,:]
+		label = label[:,::-1]
 
 		params = { "flip" : True }
 
@@ -242,14 +242,14 @@ class Shape(Augment_Type):
 
 		# crop image to the calculated square
 		data = data[y1:y2, x1:x2, :]
-		label = label[y1:y2, x1:x2, :]
+		label = label[y1:y2, x1:x2]
 
 		params = { "factor" : scale, "box" : [[x1, y1], [x1, y2], [x2, y2], [x2, y1]] }
 
 		# resize image to the original height and width
 		# TODO: OpenCV?
 		data = cv.resize(data, dsize=(height, width), interpolation=cv.INTER_LINEAR)
-		label = cv.resize(label, dsize=(height, width), interpolation=cv.INTER_NEAREST)[:,:,None]
+		label = cv.resize(label, dsize=(height, width), interpolation=cv.INTER_NEAREST)
 
 		return data, label, params
 

@@ -6,10 +6,10 @@ from matplotlib import cm, pyplot as plt
 
 mmap_mode='r'
 
-path = './data/'
+path = 'data/data_CamVidV300/'
 
 data = np.load(path + 'Train_data_CamVid.npy', mmap_mode=mmap_mode)
-label = np.load(path + 'Train_label_CamVid.npy', mmap_mode=mmap_mode)
+label = np.load(path + 'Train_label_CamVid.npy', mmap_mode=mmap_mode)[:,:,:,0]
 
 class_range = (np.min(label), np.max(label))
 

@@ -13,8 +13,8 @@ import psutil
 from Augmentation import Augmentation
 
 class FCN_SS(object):
-	def __init__(self, seed):
-		self.Augmentation = Augmentation(aug_type='all', seed=seed) # TODO: add opt parameters
+	def __init__(self):
+		pass
 
 	def build_train_graph(self):
 		opt=self.opt
@@ -145,7 +145,7 @@ class FCN_SS(object):
 			train_data = train_data.reshape((train_data.shape[0], opt.img_height, opt.img_width, 3))
 			print(train_data.shape)
 
-			train_label = train_label.reshape((train_data.shape[0], opt.img_height*opt.img_width, 1))
+			train_label = train_label.reshape((train_data.shape[0], opt.img_height, opt.img_width, 1))
 			# shape is (376, 50176, 12)
 			print(train_label.shape)
 
@@ -155,10 +155,9 @@ class FCN_SS(object):
 
 		train_image_batch=np.zeros((self.batch_size, self.img_height, self.img_width, 3), dtype=np.float32)
 		#train_label_batch=np.zeros((self.batch_size, self.img_height*self.img_width, self.N_classes), dtype=np.float32)
-		train_label_batch=np.zeros((self.batch_size, self.img_height*self.img_width, self.N_classes), dtype=np.float32)
+		train_label_batch=np.zeros((self.batch_size, self.img_height, self.img_width, 1), dtype=np.float32)
 
 		self.random=True
-
 
 		if(self.counter>=(train_data.shape[0] -1)) and (self.random==False):
 			self.counter=0
@@ -173,13 +172,13 @@ class FCN_SS(object):
 			if (self.random==False):
 				train_image_batch[i,:,:,:] = train_data[self.counter+i, :, :, :]
 				#Test Sample
-				train_label_batch[i,:,:] = self.unfould(train_label[self.counter+i, :, :])
+				train_label_batch[i,:,:,:] = train_label[self.counter+i, :, :, :]
 			else:
 				#print("RANDOM TRAINING :)")
 				index = random.randint(0, train_data.shape[0] -1)
 				train_image_batch[i,:,:,:] = train_data[index, :, :, :]
 				#Test Sample
-				train_label_batch[i,:,:] = self.unfould(train_label[index, :, :])
+				train_label_batch[i,:,:,:] = train_label[index, :, :, :]
 				#train_label_batch[i,:,:] = (train_label[index, :, :])
 
 
@@ -206,8 +205,7 @@ class FCN_SS(object):
 		TotalLOSS = 0.0
 		self.opt = opt
 
-		# TODO: set all augmentatoin parameters
-		self.Augmentation.type = opt.augmentation
+		self.Augmentation = Augmentation(aug_type=opt.aug_type, probability=opt.aug_probability, seed=opt.seed)
 
 		self.batch_size = opt.batch_size
 		self.counter = 0
@@ -280,14 +278,21 @@ class FCN_SS(object):
 				#train_image_batch, train_label_batch = self.Create_batches(train_data, train_label)
 				train_image_batch, train_label_batch = self.Create_batches(train_data, train_label)
 
-
-				train_label_batch = train_label_batch.reshape((self.batch_size, opt.img_height,  opt.img_width, 12))
+				print("Starting Augmentation")
 
 				self.Augmentation.tf_session = sess
+
 				train_image_batch, train_label_batch, infos = self.Augmentation.augment_batch(train_image_batch, train_label_batch)
 
-				train_label_batch = train_label_batch.reshape((self.batch_size, opt.img_height * opt.img_width, 12))
+				train_label_batch.reshape((train_label_batch.shape[0], self.height*self.width, 1))
 
+				unfoulded_train_label_batch = np.zeros((self.batch_size, self.height*self.width, self.N_classes), dtype=np.float32)
+				for i in range(self.batch_size):
+					unfoulded_train_label_batch[i,:,:] = self.unfould(train_label_batch[i,:,:])
+
+				train_label_batch = unfoulded_train_label_batch
+
+				print("Finished Augmentation")
 
 				#train_image_batch_ = np.reshape(train_image_batch, (opt.batch_size, opt.img_height*opt.img_width*3))
 				#train_label_batch_ = np.reshape(train_label_batch, (opt.batch_size, opt.img_height*opt.img_width*12))

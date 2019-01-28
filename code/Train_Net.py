@@ -30,8 +30,9 @@ flags.DEFINE_string("dataset", "CamVid", "Choose dataset, options [Camvid, ...]"
 flags.DEFINE_integer("numberClasses", 12, "Number of classes to be predicted")
 flags.DEFINE_string("version_net", "FCN_Seg", "Version of the net")
 flags.DEFINE_integer("configuration", 4, "Set of configurations decoder [default is 4 - full decoder], other options are [1,2,3,4]")
-flags.DEFINE_string("augmentation", None, "Data augmentation [None (default), shape, color, all]")
-
+flags.DEFINE_string("aug_type", None, "Data augmentation [None (default), shape, color, all]")
+flags.DEFINE_integer("seed", 9864, "Set random seed.")
+flags.DEFINE_float("aug_probability", 0.9, "Set probability for augmenting a single image during training.")
 
 FLAGS = flags.FLAGS
 
@@ -39,7 +40,7 @@ FLAGS = flags.FLAGS
 
 
 def main(_):
-	seed = 9864
+	seed = FLAGS.seed
 	np.random.seed(seed)
 	random.seed(seed)
 
@@ -50,7 +51,7 @@ def main(_):
 		os.makedirs(FLAGS.checkpoint_dir)
 
 	# Call Train
-	FCN = FCN_SS(seed)  # Initializes Augmentation with the same seed, aswell.
+	FCN = FCN_SS()
 	FCN.train(FLAGS)
 
 

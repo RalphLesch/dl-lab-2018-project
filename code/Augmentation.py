@@ -10,7 +10,7 @@ class Augmentation(object):
 	#probability = 0
 	#random = None
 	tf_session = None
-	
+
 	def __init__(self, aug_type=None, probability=0.5, seed=None):
 		self.augmentations = {'shape': Shape(self), 'color': Color(self)}
 		self.type = aug_type
@@ -37,7 +37,8 @@ class Augmentation(object):
 		N, height, width, channels = data.shape
 
 		for i in range(N):
-			x,y = self.augment_img(data[i,:,:,:], label[i,:,:,:])
+			print('image', i)
+			data[i,:,:,:], label[i,:,:,:] = self.augment_img(data[i,:,:,:], label[i,:,:,:])
 
 		return data, label
 
@@ -86,10 +87,47 @@ class Augmentation(object):
 			augmentation = t[a_index]
 			i = self.rand.random_unif(1, 0, 1)[0]
 			if i < p_augment:
-				print('augment:', a_index, augmentation)
+				print('    augment:', a_index)
 				data, label = augmentation(data, label)
 
 		return data, label
+
+	# ------------------------------------------------------------------------------
+	# helper functions to plot a rgb or label image
+	# TODO: move to subclass?
+
+	def rgb_image(self, np_array, reverse_colors=True, color_range=(-128, 127)):
+		'''Converts a numpy array of shape (height, width, 3) into a RGB image.'''
+
+		n_colors = color_range[1] - color_range[0] + 1
+
+		# normalize colors into range 0 to 1
+		np_array -= color_range[0]
+		np_array /= n_colors
+
+		# flip color channels
+		if reverse_colors:
+			np_array = np_array[:,:,::-1]
+
+		return plt.imshow(np_array)
+
+	def class_image(self, np_array, class_range=None):
+		'''Converts a numpy array of shape (height, width, 1) into an image with different colors for different classes.'''
+
+		# calculate range of different class labels
+		if class_range is None:
+			class_range = (np.min(np_array), np.max(np_array))
+
+		n_classes = class_range[1] - class_range[0] + 1
+
+		# normalize classes into range 0 to 1
+		np_array -= class_range[0]
+		np_array /= n_classes
+
+		# define colormap to distinguish different classes
+		colormap = cm.get_cmap(name='nipy_spectral', lut=n_classes).reversed()
+
+		return plt.imshow(np_array, cmap=colormap)
 
 # Augmentation types and functions
 
@@ -105,8 +143,11 @@ class Shape(Augment_Type):
 
 	def mirror(self, data, label):
 		'''Flips an image of the data and label batches horizontally.'''
-
-		return np.flip(data, 1), np.flip(label, 1)
+		print(data[0:5,0:5,1])
+		data = data[:,::-1,:]
+		print(data[0:5,0:5,1])
+		label = label[:,::-1,:]
+		return data, label
 
 	def crop(self, data, label, scale_prob_factor=0.1, replace=-128):
 		'''Crops an image of the data batch to a smaller rectangle padding the margin with 'replace'. The 'scale_prob_factor' determines the shape of the exponential distribution from which the scaling factor is drawn (higher values mean a smaller rectangle to which the image is cropped).'''
@@ -177,8 +218,8 @@ class Shape(Augment_Type):
 
 		# resize image to the original height and width
 		# TODO: OpenCV?
-		cv.resize(data, dsize=(height, width), interpolation=cv.INTER_LINEAR)
-		cv.resize(label, dsize=(height, width), interpolation=cv.INTER_NEAREST)
+		data = cv.resize(data, dsize=(height, width), interpolation=cv.INTER_LINEAR)
+		label = cv.resize(label, dsize=(height, width), interpolation=cv.INTER_NEAREST)[:,:,None]
 
 		return data, label
 
@@ -187,7 +228,7 @@ class Color(Augment_Type):
 	brightness_max_delta = 0.8
 	contrast_max_delta = 0.8
 	shift_max_delta = 0.8
-	
+
 	def brightness(self, data, label):
 		#tf.image.random_brightness(data, self.maxdelta, seed=?)
 		# TODO: use random_brightness / tf...random_uniform / tf.truncated_normal?
@@ -202,41 +243,3 @@ class Color(Augment_Type):
 		data = tf.image.adjust_hue(data, self.outer.rand.random_unif(1, -self.shift_max_delta, self.shift_max_delta)[0])
 		data = self.outer.tf_session.run(data)
 		return data, label
-
-
-# ------------------------------------------------------------------------------
-# helper functions to plot a rgb or label image
-# TODO: move to subclass?
-
-def rgb_image(self, np_array, reverse_colors=True, color_range=(-128, 127)):
-	'''Converts a numpy array of shape (height, width, 3) into a RGB image.'''
-
-	n_colors = color_range[1] - color_range[0] + 1
-
-	# normalize colors into range 0 to 1
-	np_array -= color_range[0]
-	np_array /= n_colors
-
-	# flip color channels
-	if reverse_colors:
-		np_array = np_array[:,:,::-1]
-
-	return plt.imshow(np_array)
-
-def class_image(self, np_array, class_range=None):
-	'''Converts a numpy array of shape (height, width, 1) into an image with different colors for different classes.'''
-
-	# calculate range of different class labels
-	if class_range is None:
-		class_range = (np.min(np_array), np.max(np_array))
-
-	n_classes = class_range[1] - class_range[0] + 1
-
-	# normalize classes into range 0 to 1
-	np_array -= class_range[0]
-	np_array /= n_classes
-
-	# define colormap to distinguish different classes
-	colormap = cm.get_cmap(name='nipy_spectral', lut=n_classes).reversed()
-
-	return plt.imshow(np_array, cmap=colormap)

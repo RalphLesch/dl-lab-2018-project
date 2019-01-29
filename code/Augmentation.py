@@ -2,15 +2,11 @@ import random
 import numpy as np
 from scipy import special
 from matplotlib import cm, pyplot as plt
-import tensorflow as tf
 import cv2 as cv
 from skimage import exposure, color, img_as_float
 from RandomParam import RandomParam
 
 class Augmentation(object):
-	#probability = 0
-	#random = None
-	tf_session = None
 
 	def __init__(self, aug_type=None, probability=0.9, seed=None):
 		self.augmentations = {'shape': Shape(self), 'color': Color(self)}
@@ -267,8 +263,7 @@ class Color(Augment_Type):
 	shift_deviation = 0.1
 
 	def brightness(self, data, label):
-		#tf.image.random_brightness(data, self.maxdelta, seed=?)
-		# TODO: use random_brightness / tf...random_uniform / tf.truncated_normal?
+
 		data = data.copy()
 
 		delta = self.outer.rand.random_trunc_norm(1, -self.brightness_max_delta, self.brightness_max_delta, 0, self.brightness_deviation)[0]

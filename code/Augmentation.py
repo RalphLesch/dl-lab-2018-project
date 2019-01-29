@@ -4,6 +4,7 @@ from scipy import special
 from matplotlib import cm, pyplot as plt
 import tensorflow as tf
 import cv2 as cv
+from skimage import exposure, color, img_as_float
 from RandomParam import RandomParam
 
 class Augmentation(object):
@@ -169,7 +170,7 @@ class Shape(Augment_Type):
 
 		return data, label, params
 
-	def crop(self, data, label, scale_prob_factor=0.1, replace=-128):
+	def crop(self, data, label, scale_prob_factor=0.1, replace=0):
 		'''Crops an image of the data batch to a smaller rectangle padding the margin with 'replace'. The 'scale_prob_factor' determines the shape of the exponential distribution from which the scaling factor is drawn (higher values mean a smaller rectangle to which the image is cropped).'''
 
 		data = data.copy()
@@ -198,7 +199,7 @@ class Shape(Augment_Type):
 		return data, label, params
 
 
-	def cut(self, data, label, scale_prob_factor=0.25, replace=-128):
+	def cut(self, data, label, scale_prob_factor=0.25, replace=0):
 		'''Cuts out a rectangle from an image of the data batch and overwrites the values with 'replace'. The 'scale_prob_factor' determines the shape of the exponential distribution from which the scaling factor is drawn (higher values mean a larger rectangle which is replaced).'''
 
 		data = data.copy()
@@ -258,36 +259,42 @@ class Shape(Augment_Type):
 
 
 class Color(Augment_Type):
-	brightness_deviation = 0.1
-	brightness_max_delta = 0.8
+
+	brightness_deviation = 64
+	brightness_max_delta = 128
 	contrast_deviation = 0.1
-	shift_max_delta = 0.8
-	shift_deviation = 0.05
+	shift_max_delta = 1
+	shift_deviation = 0.1
 
 	def brightness(self, data, label):
 		#tf.image.random_brightness(data, self.maxdelta, seed=?)
 		# TODO: use random_brightness / tf...random_uniform / tf.truncated_normal?
+		data = data.copy()
+
 		delta = self.outer.rand.random_trunc_norm(1, -self.brightness_max_delta, self.brightness_max_delta, 0, self.brightness_deviation)[0]
-		data = tf.image.adjust_brightness(data, delta)
-		data = self.outer.tf_session.run(data) # TODO: avoid by using tensors and process in outer session call.
+
+		data += delta
+		np.clip(data, 0, 512, out=data)
 		params = { "delta" : delta }
 
 		return data, label, params
 
 	def contrast(self, data, label):
 
-		delta = 1 - self.outer.rand.random_trunc_exp(1, 0, 1, self.contrast_deviation)[0]
-		data = tf.image.adjust_contrast(data, delta)
-		data = self.outer.tf_session.run(data)
-		params = { "delta" : delta }
+		gamma = self.outer.rand.random_trunc_norm(1, 0, 2, 1, self.contrast_deviation)[0]
+		data = exposure.adjust_gamma(data, gamma)
+		params = { "delta" : gamma }
 
 		return data, label, params
 
 	def shift(self, data, label):
 
-		delta = self.outer.rand.random_trunc_norm(1, -self.shift_max_delta, self.shift_max_delta, 0, self.shift_deviation)[0]
-		data = tf.image.adjust_hue(data, delta)
-		data = self.outer.tf_session.run(data)
+		hue = self.outer.rand.random_trunc_norm(1,-self.shift_max_delta, self.shift_max_delta, 0, self.shift_deviation)[0]
+
+		hsv = color.rgb2hsv(data)
+		hsv[:, :, 0] = hue
+		data = color.hsv2rgb(hsv)
+
 		params = { "delta" : delta }
 
 		return data, label, params

@@ -5,7 +5,7 @@ import math
 import random
 import numpy as np
 import tensorflow as tf
-import pprint
+#import pprint
 
 from FCN import *
 
@@ -44,8 +44,9 @@ def main(_):
 	np.random.seed(seed)
 	random.seed(seed)
 
-	pp = pprint.PrettyPrinter()
-	pp.pprint(flags.FLAGS.__flags)
+	#pp = pprint.PrettyPrinter()
+	#pp.pprint(flags.FLAGS.__flags)
+	print(flags.FLAGS.flags_into_string())
 
 	if not os.path.exists(FLAGS.checkpoint_dir):
 		os.makedirs(FLAGS.checkpoint_dir)

@@ -11,6 +11,7 @@ from nets_definition import *
 
 import psutil
 from Augmentation import Augmentation
+import json
 
 class FCN_SS(object):
 	def __init__(self):
@@ -271,6 +272,7 @@ class FCN_SS(object):
 
 			print("=================== Starting Iterations =========================")
 			global_start_time = time.time()
+			stats = []
 			for step in range(1, opt.max_steps):
 				start_time = time.time()
 				fetches = {"Training": self.Training, "global_step": self.global_step, "incr_global_step": self.incr_global_step}
@@ -282,7 +284,7 @@ class FCN_SS(object):
 
 				self.Augmentation.tf_session = sess
 
-				train_image_batch, train_label_batch, infos = self.Augmentation.augment_batch(train_image_batch, train_label_batch)
+				train_image_batch, train_label_batch, infos = self.Augmentation.augment_batch(train_image_batch + 128, train_label_batch)
 
 				train_label_batch.reshape((train_label_batch.shape[0], self.height*self.width, 1))
 
@@ -347,6 +349,12 @@ class FCN_SS(object):
 
 				#train_writer.close()
 			print('Global training time == ', time.time() - global_start_time)
+			
+			# Saving stats to json
+			stats_path = os.path.join(self.logs_path, 'stats.json')
+			with open(stats_path, 'w') as f:
+				json.dump(stats, f)
+			print('stats saved to: ' + stats_path)
 
 
 	def save(self, sess, checkpoint_dir, step):

@@ -1,4 +1,3 @@
-import random
 import numpy as np
 from scipy import special
 from matplotlib import cm, pyplot as plt
@@ -12,11 +11,7 @@ class Augmentation(object):
 		self.augmentations = {'shape': Shape(self), 'color': Color(self)}
 		self.type = aug_type
 		self.probability = probability
-		# self.random = random.Random()
-		# if seed is not None:
-		# 	self.random.seed(seed)
 		self.rand = RandomParam(seed)
-
 
 	@property
 	def type(self):
@@ -156,6 +151,13 @@ class Augment_Type(dict):
 
 
 class Shape(Augment_Type):
+	
+	crop_max_delta = 0.5
+	crop_deviation = 0.1
+	cut_max_delta = 0.5
+	cut_deviation = 0.25
+	scale_max_delta = 1
+	scale_deviation = 0.1
 
 	def mirror(self, data, label):
 		'''Flips an image of the data and label batches horizontally.'''
@@ -166,8 +168,8 @@ class Shape(Augment_Type):
 
 		return data, label, params
 
-	def crop(self, data, label, scale_prob_factor=0.1, replace=0):
-		'''Crops an image of the data batch to a smaller rectangle padding the margin with 'replace'. The 'scale_prob_factor' determines the shape of the exponential distribution from which the scaling factor is drawn (higher values mean a smaller rectangle to which the image is cropped).'''
+	def crop(self, data, label, replace=0):
+		'''Crops an image of the data batch to a smaller rectangle padding the margin with 'replace'. The 'crop_deviation' determines the shape of the exponential distribution from which the scaling factor is drawn (higher values mean a smaller rectangle to which the image is cropped).'''
 
 		data = data.copy()
 
@@ -175,8 +177,8 @@ class Shape(Augment_Type):
 		rand = self.outer.rand
 
 		# draw random scale values from truncated normal distribution
-		scale_x = 1 - rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
-		scale_y = 1 - rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
+		scale_x = 1 - rand.random_trunc_exp(1, 0, self.crop_max_delta, self.crop_deviation)[0]
+		scale_y = 1 - rand.random_trunc_exp(1, 0, self.crop_max_delta, self.crop_deviation)[0]
 
 		# draw random x and y positions for the corners of the rectangle that is used to crop the image
 		x1 = int(rand.random_unif(1, 0, 1)[0] * (1 - scale_x) * width)
@@ -195,8 +197,8 @@ class Shape(Augment_Type):
 		return data, label, params
 
 
-	def cut(self, data, label, scale_prob_factor=0.25, replace=0):
-		'''Cuts out a rectangle from an image of the data batch and overwrites the values with 'replace'. The 'scale_prob_factor' determines the shape of the exponential distribution from which the scaling factor is drawn (higher values mean a larger rectangle which is replaced).'''
+	def cut(self, data, label, replace=0):
+		'''Cuts out a rectangle from an image of the data batch and overwrites the values with 'replace'. The 'cut_deviation' determines the shape of the exponential distribution from which the scaling factor is drawn (higher values mean a larger rectangle which is replaced).'''
 
 		data = data.copy()
 
@@ -204,8 +206,8 @@ class Shape(Augment_Type):
 		rand = self.outer.rand
 
 		# draw random scale values from truncated normal distribution
-		scale_x = rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
-		scale_y = rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
+		scale_x = rand.random_trunc_exp(1, 0, self.cut_max_delta, self.cut_deviation)[0]
+		scale_y = rand.random_trunc_exp(1, 0, self.cut_max_delta, self.cut_deviation)[0]
 
 		# draw random x and y positions for the corners of the rectangle that is replaced
 		x1 = int(rand.random_unif(1, 0, 1)[0] * (1 - scale_x) * width)
@@ -216,14 +218,13 @@ class Shape(Augment_Type):
 		params = { "factor_x" : scale_x, "factor_y" : scale_y, "box" : [[x1, y1], [x1, y2], [x2, y2], [x2, y1]] }
 
 		# cut out rectangle and replace values
-		# TODO: BUG! Cannot assign to read only memory mapped data (numpy mmap_mode='r')
 		data[y1:y2, x1:x2, :] = replace
 
 		return data, label, params
 
 
-	def scale(self, data, label, scale_prob_factor=0.1):
-		'''Rescales an image of the data and label batches. The 'scale_prob_factor' determines the shape of the exponential distribution from which the scaling factor is drawn (higher values mean a smaller square to which the image is zoomed).'''
+	def scale(self, data, label):
+		'''Rescales an image of the data and label batches. The 'scale_deviation' determines the shape of the exponential distribution from which the scaling factor is drawn (higher values mean a smaller square to which the image is zoomed).'''
 
 		data = data.copy()
 		label = label.copy()
@@ -232,7 +233,7 @@ class Shape(Augment_Type):
 		rand = self.outer.rand
 
 		# draw random scale value from truncated normal distribution
-		scale = 1 - self.outer.rand.random_trunc_exp(1, 0, 1, scale_prob_factor)[0]
+		scale = 1 - self.outer.rand.random_trunc_exp(1, 0, self.scale_max_delta, self.scale_deviation)[0]
 
 		# draw random x and y positions for the corners of the square that is used to crop the image
 		x1 = int(rand.random_unif(1, 0, 1)[0] * (1 - scale) * width)
@@ -256,11 +257,12 @@ class Shape(Augment_Type):
 
 class Color(Augment_Type):
 
-	brightness_deviation = 64
-	brightness_max_delta = 128
+	brightness_deviation = 32
+	brightness_max_delta = 64
 	contrast_deviation = 0.1
-	shift_max_delta = 1
-	shift_deviation = 0.1
+	contrast_max_delta = 0.25
+	shift_deviation = 0.05
+	shift_max_delta = 0.2
 
 	def brightness(self, data, label):
 
@@ -276,7 +278,7 @@ class Color(Augment_Type):
 
 	def contrast(self, data, label):
 
-		gamma = self.outer.rand.random_trunc_norm(1, 0, 2, 1, self.contrast_deviation)[0]
+		gamma = 1 + self.outer.rand.random_trunc_norm(1, -self.contrast_max_delta, self.contrast_max_delta, 0, self.contrast_deviation)[0]
 		data = exposure.adjust_gamma(data, gamma)
 		params = { "delta" : gamma }
 
@@ -284,12 +286,12 @@ class Color(Augment_Type):
 
 	def shift(self, data, label):
 
-		hue = self.outer.rand.random_trunc_norm(1,-self.shift_max_delta, self.shift_max_delta, 0, self.shift_deviation)[0]
+		hue = self.outer.rand.random_trunc_norm(1, -self.shift_max_delta, self.shift_max_delta, 0, self.shift_deviation)[0]
 
 		hsv = color.rgb2hsv(data)
-		hsv[:, :, 0] = hue
+		hsv[:, :, 0] += hue
 		data = color.hsv2rgb(hsv)
 
-		params = { "delta" : delta }
+		params = { "delta" : hue }
 
 		return data, label, params

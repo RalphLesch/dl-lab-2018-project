@@ -1,3 +1,5 @@
 #!/bin/bash
 
-python Test_Net.py --model_path=./checkpoints/ultraslimS_$1 --configuration=$1 >logs/test$1.log 2>&1 &
+cp=$1
+shift
+python Test_Net.py --model_path=./checkpoints/$cp --dataset_dir=./data/data_CamVidV300/ $@ 2>&1 | tee logs/${cp}_test.log

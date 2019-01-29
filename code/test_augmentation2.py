@@ -9,7 +9,7 @@ mmap_mode='r'
 path = 'data/data_CamVidV300/'
 
 data = np.load(path + 'Train_data_CamVid.npy', mmap_mode=mmap_mode)
-label = np.load(path + 'Train_label_CamVid.npy', mmap_mode=mmap_mode)[:,:,:,0]
+label = np.load(path + 'Train_label_CamVid.npy', mmap_mode=mmap_mode)
 
 class_range = (np.min(label), np.max(label))
 
@@ -26,6 +26,7 @@ with tf.Session() as sess:
 	fig = plt.figure(figsize=(8,10))
 	for i in range(0, n_rows):
 
+		# aug.augment_batch(data[1:10,:,:,:], label[1:10,:,:])
 		d, l, info = aug.augment_img(data[i], label[i]) # TODO: copy should not be required!
 
 		print('image ' + str(i) + ' - augmentation types: ' + ', '.join(info.keys()))

@@ -38,9 +38,12 @@ class Augmentation(object):
 
 		augmentation_infos = []
 
+		aug_data = np.zeros(data.shape, data.dtype)
+		aug_label = np.zeros(label.shape, label.dtype)
+
 		for i in range(N):
-			print('image', i)
-			data[i,:,:,:], label[i,:,:,:], infos = self.augment_img(data[i,:,:,:], label[i,:,:,:])
+			# print('image', i)
+			aug_data[i,:,:,:], aug_label[i,:,:,:], infos = self.augment_img(data[i,:,:,:], label[i,:,:,:])
 			augmentation_infos.append(infos)
 
 		return data, label, augmentation_infos
@@ -143,7 +146,7 @@ class Augmentation(object):
 		# define colormap to distinguish different classes
 		colormap = cm.get_cmap(name='nipy_spectral', lut=n_classes).reversed()
 
-		return plt.imshow(np_array, cmap=colormap)
+		return plt.imshow(np_array[:,:,0], cmap=colormap)
 
 # Augmentation types and functions
 
@@ -160,7 +163,7 @@ class Shape(Augment_Type):
 	def mirror(self, data, label):
 		'''Flips an image of the data and label batches horizontally.'''
 		data = data[:,::-1,:]
-		label = label[:,::-1]
+		label = label[:,::-1,:]
 
 		params = { "flip" : True }
 
@@ -242,14 +245,14 @@ class Shape(Augment_Type):
 
 		# crop image to the calculated square
 		data = data[y1:y2, x1:x2, :]
-		label = label[y1:y2, x1:x2]
+		label = label[y1:y2, x1:x2, :]
 
 		params = { "factor" : scale, "box" : [[x1, y1], [x1, y2], [x2, y2], [x2, y1]] }
 
 		# resize image to the original height and width
 		# TODO: OpenCV?
 		data = cv.resize(data, dsize=(height, width), interpolation=cv.INTER_LINEAR)
-		label = cv.resize(label, dsize=(height, width), interpolation=cv.INTER_NEAREST)
+		label = cv.resize(label, dsize=(height, width), interpolation=cv.INTER_NEAREST)[:,:,None]
 
 		return data, label, params
 

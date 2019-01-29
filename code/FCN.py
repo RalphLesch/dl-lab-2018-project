@@ -146,7 +146,7 @@ class FCN_SS(object):
 			print(train_data.shape)
 
 			train_label = train_label.reshape((train_data.shape[0], opt.img_height, opt.img_width, 1))
-			# shape is (376, 50176, 12)
+
 			print(train_label.shape)
 
 			return train_data, train_label
@@ -278,7 +278,7 @@ class FCN_SS(object):
 				#train_image_batch, train_label_batch = self.Create_batches(train_data, train_label)
 				train_image_batch, train_label_batch = self.Create_batches(train_data, train_label)
 
-				print("Starting Augmentation")
+				# print("Starting Augmentation")
 
 				self.Augmentation.tf_session = sess
 
@@ -292,7 +292,7 @@ class FCN_SS(object):
 
 				train_label_batch = unfoulded_train_label_batch
 
-				print("Finished Augmentation")
+				# print("Finished Augmentation")
 
 				#train_image_batch_ = np.reshape(train_image_batch, (opt.batch_size, opt.img_height*opt.img_width*3))
 				#train_label_batch_ = np.reshape(train_label_batch, (opt.batch_size, opt.img_height*opt.img_width*12))

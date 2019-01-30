@@ -10,4 +10,4 @@ cp=$1
 shift
 
 mkdir logs/$cp
-stdbuf -o0 -e0 python3 Train_Net.py --dataset_dir=./data/data_CamVidV300/ --checkpoint_dir=./checkpoints/$cp/ --logs_path=./logs/$cp/ --max_steps=21000 $@ 2>&1 | tee logs/$cp/train.log
+stdbuf -o0 -e0 python3 Train_Net.py --dataset_dir=./data/data_CamVidV300/ --checkpoint_dir=./checkpoints/$cp/ --logs_path=./logs/$cp/ --max_steps=21000 $@ 2>&1 | tee -a logs/$cp/train.log

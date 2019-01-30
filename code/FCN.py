@@ -10,7 +10,7 @@ from metrics import *
 from nets_definition import *
 
 import psutil
-from Augmentation import Augmentation
+from imgaug_augmentation import Augmentation
 import json
 
 class FCN_SS(object):
@@ -282,9 +282,9 @@ class FCN_SS(object):
 
 				# print("Starting Augmentation")
 
-				self.Augmentation.tf_session = sess
+				# self.Augmentation.tf_session = sess
 
-				train_image_batch, train_label_batch, infos = self.Augmentation.augment_batch(train_image_batch + 128, train_label_batch)
+				train_image_batch, train_label_batch = self.Augmentation.augment_batch(train_image_batch + 128, train_label_batch)
 				stats.append(infos)
 
 				train_label_batch.reshape((train_label_batch.shape[0], self.height*self.width, 1))
@@ -350,7 +350,7 @@ class FCN_SS(object):
 
 				#train_writer.close()
 			print('Global training time == ', time.time() - global_start_time)
-			
+
 			# Saving stats to json
 			stats_path = os.path.join(self.logs_path, 'stats.json')
 			with open(stats_path, 'w') as f:

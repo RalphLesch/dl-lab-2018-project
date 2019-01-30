@@ -285,6 +285,7 @@ class FCN_SS(object):
 				self.Augmentation.tf_session = sess
 
 				train_image_batch, train_label_batch, infos = self.Augmentation.augment_batch(train_image_batch + 128, train_label_batch)
+				stats.append(infos)
 
 				train_label_batch.reshape((train_label_batch.shape[0], self.height*self.width, 1))
 

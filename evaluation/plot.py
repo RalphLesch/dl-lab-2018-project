@@ -20,6 +20,8 @@ def plot_all_checkpoint_IoU(args):
 	args.file = file_paths
 	if not args.title:
 		args.title = names
+	if not args.labels:
+		args.labels = names
 	plot(args)
 
 
@@ -74,7 +76,8 @@ def plot(args):
                 print('Showing', title or file, sep=' ')
                 plt.show()
     if args.merge:
-        plt.legend(bbox_to_anchor=(0.95, 0.85))  # CUSTOM
+        plt.legend()
+        #plt.legend(bbox_to_anchor=(0.95, 0.85))  # CUSTOM
 
         plt.ylabel(args.ylabel)
         plt.xlabel(args.xlabel)

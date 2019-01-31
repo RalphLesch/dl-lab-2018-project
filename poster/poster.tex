@@ -103,20 +103,23 @@ In our case study we use a hierarchical encoder-decoder network with skip connec
 
 \headerbox{3. Training}{name=training,column=0,below=architecture,span=1}{
 
-The network is trained on CamVid dataset, which contains ???? different labeled images. To allow for a fair comparison between the 4 different configurations, we use the same hyperparameters (namely the total amount of iterations and batch size) for all types of augmentation. Batches are created by sampling images from the original dataset with pseudo-random numbers and then applying augmentations on 90\% of the images. To facilitate multiple independent modifications $A_k$ (e.g. cropping and flipping an image) we implemented our own statistical framework based on the principle of inclusion and exclusion, where:
+The network is trained on CamVid dataset, which contains ???? different labeled images. To allow for a fair comparison between the 4 different configurations, we use the same hyperparameters (namely the total amount of iterations and batch size) for all types of augmentation. Batches are created by sampling images from the original dataset with pseudo-random numbers and then applying augmentations for setting (2) - (4) on 90\% of the images. To facilitate multiple independent modifications $A_k$ (e.g. cropping and flipping an image) we implemented our own probabilistic framework based on the principle of inclusion and exclusion, where:
 %\[P(A_i \cup A_j) = P(A_i) + P(A_j) - P(A_i \cap A_j)\] \[= 2\cdot P(A_i) - P(A_i)^2\] or in more general form: 
 \[P\left(\bigcup_{k=1}^{n} A_k\right) = \sum_{k=1}^{n} (-1)^{(k+1)} \begin{pmatrix} n \\ k \\\end{pmatrix}P(A_k)^k,\]
 which randomly selects different types of augmentations in varying order. We use the same probability for shape or color modification when investigating setting (4). Because of storage limitations all augmentations are calculated \textit{"on the fly"} using {\color{darkblue} Python 3.?} together with the {\color{darkblue} Numpy}, {\color{darkblue} Scipy}, {\color{darkblue} OpenCV} and {\color{darkblue} Scikit-Image} packages, before feeding them into the CNN.
 }
 
 
-\headerbox{4. Augmentations}{name=augmentations,span=2,column=1,below=introduction}{ % To reduce this block to 1 column width, remove 'span=2'
+\headerbox{4. Examples}{name=examples,span=2,column=1,below=introduction}{ % To reduce this block to 1 column width, remove 'span=2'
 
-%DeCAF is a versatile tool with many possible applications.
-%It allows to compare two molecules or more complex models created from sets of ligands.
-%Our method can be used to align multiple ligands and find crucial pharmacophoric features in a set of active compounds.
-%Pharmacophore models can help in database screening for molecules with desired properties.
-%DeCAF is also suitable for comparing entire sets of ligands, e.g. to analyse properties of proteins in drug repositioning process.
+\begin{wrapfigure}{l}{0.8\textwidth}
+    \begin{center}
+        \includegraphics[width=\linewidth]{aug_hack_example1.pdf}
+        \caption{Different types of augmentation applied to a single image. From left to right: original image, orignal segmentation map, augmented image, augmented segmentation map.}
+    \end{center}
+\end{wrapfigure}
+
+In order to parametrize shape and color modifications we draw samples from different types of distribution (uniform distribution, truncated normal distribution and truncated exponential distribution) depending on the type of augmentation. Hyperparameters (scale and marginal values of the distributions) are adjusted by manually applying random augmentations on some arbitrary images of the CamVid dataset. The range of possible modifications is thereby limited to realistic variations that correspond to natural changes of lightning conditions and scale transformations. Cutout and cropping operations are chosen to cover at most 1/4 of all pixels.
 
 %\vspace{-5pt}
 %\begin{center}
@@ -125,21 +128,21 @@ which randomly selects different types of augmentations in varying order. We use
 }
 
 
-\headerbox{5. Results}{name=results,span=2,column=1,below=augmentations}{ % To reduce this block to 1 column width, remove 'span=2'
+\headerbox{5. Results}{name=results,span=2,column=1,below=examples}{ % To reduce this block to 1 column width, remove 'span=2'
 
-%\begin{wrapfigure}{l}{0.3\textwidth}
-%    \vspace{10pt}
-%    \begin{center}
-%        \includegraphics[width=\linewidth]{class}
-%    \end{center}
-%    %\vspace{-145pt}
+
+
+%\begin{wrapfigure}{l}{\textwidt}
+%    \includegraphics[width=0.7\linewidth]{figures/aug_hack_example1}
 %\end{wrapfigure}
 
-% We tested DeCAF in 35 case studies taken from the DUD-E database, to evaluate its power to discriminate between active and inactive molecules.
-% We used DeCAF as a classifier and compared it to the SEA (Similarity Ensemble Approach) algorithm \cite{keiser2007relating}.
-% To compare sets of ligands, we adapted the approach used in SEA, replacing Tc by DCAF.
-% We prepared datasets as shown in the left diagram.
-% Then, we tested both classifiers calculating ROC AUC values for every target (below).
+
+
+ We tested DeCAF in 35 case studies taken from the DUD-E database, to evaluate its power to discriminate between active and inactive molecules.
+ We used DeCAF as a classifier and compared it to the SEA (Similarity Ensemble Approach) algorithm \cite{keiser2007relating}.
+ To compare sets of ligands, we adapted the approach used in SEA, replacing Tc by DCAF.
+ We prepared datasets as shown in the left diagram.
+ Then, we tested both classifiers calculating ROC AUC values for every target (below).
 %We tested DeCAF in 35 diverse targets taken from the DUD-E database, to evaluate its power to classify molecules as active or inactive.
 %We compared DeCAF to the renowned \textbf{SEA (Similarity Ensemble Approach)} algorithm \cite{keiser2007relating}, which uses Tc as a similarity measure.
 %Dataset preparation steps are shown on the left diagram.

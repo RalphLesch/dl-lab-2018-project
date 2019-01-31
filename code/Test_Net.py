@@ -105,10 +105,9 @@ def main():
 				segmentationMask = pred.argmax(axis=1)
 				segmentationMask_flat = segmentationMask.reshape(FLAGS.img_height*FLAGS.img_width)
 				segmentationMask = segmentationMask.reshape(FLAGS.img_height, FLAGS.img_width)
-				#print(segmentationMask.shape)
 
-				if FLAGS.Save_Segmentation and (test_idx + 1) == imgs.shape[0]:
-					final_seg_maps[test_idx] = segmentationMask
+				if FLAGS.Save_Segmentation and test_idx + 1 == imgs.shape[0]:
+					final_seg_maps[test_idx] = np.round(segmentationMask)
 
 				label_instance = label[test_idx,:, :].argmax(axis=1)
 				label_instance = label_instance.reshape(FLAGS.img_height*FLAGS.img_width)
@@ -145,7 +144,7 @@ def main():
 			print("Test IoU == ", np.mean(I_tot / U_tot))
 			Test_IoU = np.mean(I_tot / U_tot)
 			iter_T = int(FLAGS.lower_iter) + (i*1000)
-			f.write( str(iter_T) + ' ' + str(Test_IoU) + ' ' + str(accuracy) + '\n' )
+			f.write( str(iter_T) + ' ' + str(Test_IoU) + ' ' + str(Global_accuracy/imgs.shape[0]) + '\n' )
 
 		np.save(seg_name, final_seg_maps)
 

@@ -287,11 +287,11 @@ class FCN_SS(object):
 				train_image_batch, train_label_batch = self.Augmentation.augment_batch(train_image_batch + 128, train_label_batch + 1)
 				# stats.append(infos)
 
-				train_label_batch.reshape((train_label_batch.shape[0], self.height*self.width, 1)) - 1
+				train_label_batch.reshape((train_label_batch.shape[0], self.height*self.width, 1))
 
 				unfoulded_train_label_batch = np.zeros((self.batch_size, self.height*self.width, self.N_classes), dtype=np.float32)
 				for i in range(self.batch_size):
-					unfoulded_train_label_batch[i,:,:] = self.unfould(train_label_batch[i,:,:])
+					unfoulded_train_label_batch[i,:,:] = self.unfould(train_label_batch[i,:,:] - 1)
 
 				train_label_batch = unfoulded_train_label_batch
 

@@ -2,7 +2,7 @@ import numpy as np
 from scipy import special
 from matplotlib import cm, pyplot as plt
 import cv2 as cv
-from skimage import exposure, color, img_as_float
+from skimage import exposure, color
 from RandomParam import RandomParam
 
 class Augmentation(object):
@@ -26,6 +26,9 @@ class Augmentation(object):
 	def augment_batch(self, data, label):
 		'''Apply random augmentations to all the images of the data and label batches.'''
 
+		if self._type is None:
+			return data, label, infos
+		
 		N, height, width, channels = data.shape
 
 		augmentation_infos = []
@@ -38,7 +41,7 @@ class Augmentation(object):
 			aug_data[i,:,:,:], aug_label[i,:,:,:], infos = self.augment_img(data[i,:,:,:], label[i,:,:,:])
 			augmentation_infos.append(infos)
 
-		return data, label, augmentation_infos
+		return aug_data, aug_label, augmentation_infos
 
 
 	def augment_img(self, data, label):

@@ -10,10 +10,16 @@ path = 'data/data_CamVidV300/'
 data = np.load(path + 'Train_data_CamVid.npy', mmap_mode=mmap_mode)
 label = np.load(path + 'Train_label_CamVid.npy', mmap_mode=mmap_mode)
 
-seed=16
+seed=88
 
 img = data[0:1,:,:,:] + 128
 segmap = label[0:1,:,:,:] + 1
+
+img -= np.min(img)
+img /= np.max(img)
+img *= 255
+
+print(np.min(img), np.max(img))
 
 imgs = np.repeat(img, 8, axis=0)
 imgs = imgs.reshape((8,300,300,3))
@@ -35,7 +41,7 @@ aug_imgs2, aug_segmaps2 = a2.augment_batch(imgs,segmaps)
 # plt.show()
 
 
-plot = a2.plot_aug_batch(imgs, segmaps, aug_imgs2, aug_segmaps2, ncols=8)
+plot = a2.plot_aug_batch(imgs, segmaps, aug_imgs2, aug_segmaps2, ncols=4)
 # plot = a2.plot_aug_batch(imgs, segmaps, aug_imgs2, aug_segmaps2)
 
 print([", ".join(list(info.keys())) for info in infos])

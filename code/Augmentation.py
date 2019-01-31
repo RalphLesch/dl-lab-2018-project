@@ -25,13 +25,13 @@ class Augmentation(object):
 
 	def augment_batch(self, data, label):
 		'''Apply random augmentations to all the images of the data and label batches.'''
-
+		
+		augmentation_infos = []
+		
 		if self._type is None:
-			return data, label, infos
+			return data, label, augmentation_infos
 		
 		N, height, width, channels = data.shape
-
-		augmentation_infos = []
 
 		aug_data = np.zeros(data.shape, data.dtype)
 		aug_label = np.zeros(label.shape, label.dtype)

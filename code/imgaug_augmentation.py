@@ -75,6 +75,10 @@ class Augmentation(object):
 
 	def augment_img_and_segmap(self, img, segmap):
 
+		if self.type is None:
+			return img, segmap
+
+
 		seq_det = self.seq.to_deterministic()
 		aug_img = seq_det.augment_images(img)
 		aug_segmap = seq_det.augment_segmentation_maps([segmap])[0]
@@ -82,6 +86,9 @@ class Augmentation(object):
 		return aug_img, aug_segmap
 
 	def augment_batch(self, images, segmaps, n_classes=12):
+
+		if self.type is None:
+			return images, segmaps
 
 		aug_images = np.zeros(images.shape)
 		aug_segmaps = np.zeros(segmaps.shape)
@@ -141,9 +148,9 @@ class Augmentation(object):
 
 			cells.append(img)
 			# cells.append(segmap.draw(size=aug_img.shape[:2]))
-			cells.append(segmap.draw_on_image(img))
+			cells.append(segmap.draw_on_image(img, alpha=0.5))
 			cells.append(aug_img)
-			cells.append(aug_segmap.draw_on_image(aug_img))
+			cells.append(aug_segmap.draw_on_image(aug_img, alpha=0.5))
 
 		plot = ia.draw_grid(cells, cols=ncols)
 

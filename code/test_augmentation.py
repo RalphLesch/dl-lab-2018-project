@@ -10,27 +10,35 @@ path = 'data/data_CamVidV300/'
 data = np.load(path + 'Train_data_CamVid.npy', mmap_mode=mmap_mode)
 label = np.load(path + 'Train_label_CamVid.npy', mmap_mode=mmap_mode)
 
-imgs = data[0:24,:,:,:] + 128
-segmaps = label[0:24,:,:,:] + 1
+seed=16
 
-a1 = aug1(aug_type="all", seed=14, probability=0.9)
-a2 = aug2(aug_type="all", seed=14, probability=0.9)
+img = data[0:1,:,:,:] + 128
+segmap = label[0:1,:,:,:] + 1
 
+imgs = np.repeat(img, 8, axis=0)
+imgs = imgs.reshape((8,300,300,3))
+print(imgs.shape)
+segmaps = np.repeat(segmap, 8, axis=0)
+segmaps = segmaps.reshape((8,300,300,1))
 
-aug_imgs1, aug_segmaps1, info = a1.augment_batch(imgs,segmaps)
+a1 = aug1(aug_type="all", seed=seed, probability=0.9)
+a2 = aug2(aug_type="all", seed=seed, probability=0.9)
+
+aug_imgs1, aug_segmaps1, infos = a1.augment_batch(imgs,segmaps)
 aug_imgs2, aug_segmaps2 = a2.augment_batch(imgs,segmaps)
 
-print(info)
+#
+# rgb_image(imgs[0])
+# plt.show()
+#
+# rgb_image(aug_imgs1[0])
+# plt.show()
 
-rgb_image(imgs[0])
-plt.show()
 
-rgb_image(aug_imgs1[0])
-plt.show()
-
-
-plot = a2.plot_aug_batch(imgs, segmaps, aug_imgs1, aug_segmaps1)
+plot = a2.plot_aug_batch(imgs, segmaps, aug_imgs2, aug_segmaps2, ncols=8)
 # plot = a2.plot_aug_batch(imgs, segmaps, aug_imgs2, aug_segmaps2)
+
+print([", ".join(list(info.keys())) for info in infos])
 
 rgb_image(plot.astype(np.float32))
 plt.show()

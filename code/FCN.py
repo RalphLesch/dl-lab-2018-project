@@ -194,8 +194,8 @@ class FCN_SS(object):
 		for row in range(0, self.height):
 			for column in range(0, self.width):
 				#print("label", int(image[0,row,column,0]))
-				#if(int(image[0,row,column,0]) >= 0): # and (int(image[0,row,column,0]) != 11):
-				label_training[0,row,column,int(image[0,row,column,0])] = 1
+				if(int(image[0,row,column,0]) >= 0): # and (int(image[0,row,column,0]) != 11):
+					label_training[0,row,column,int(image[0,row,column,0])] = 1
 				# else:
 				# 	label_training[0,row,column,int(image[0,row,column,0])] = 1
 		label_training = np.reshape(label_training, (1, self.height*self.width, self.N_classes))
@@ -284,10 +284,10 @@ class FCN_SS(object):
 
 				# self.Augmentation.tf_session = sess
 
-				train_image_batch, train_label_batch = self.Augmentation.augment_batch(train_image_batch + 128, train_label_batch)
+				train_image_batch, train_label_batch = self.Augmentation.augment_batch(train_image_batch + 128, train_label_batch + 1)
 				# stats.append(infos)
 
-				train_label_batch.reshape((train_label_batch.shape[0], self.height*self.width, 1))
+				train_label_batch.reshape((train_label_batch.shape[0], self.height*self.width, 1)) - 1
 
 				unfoulded_train_label_batch = np.zeros((self.batch_size, self.height*self.width, self.N_classes), dtype=np.float32)
 				for i in range(self.batch_size):

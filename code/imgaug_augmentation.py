@@ -10,22 +10,19 @@ class Augmentation(object):
 		self.type = aug_type
 		ia.seed(seed)
 		self.shape = [
-			iaa.Crop(px=(32, 128)),
+			iaa.Crop(px=(32, 64)),
 			iaa.Fliplr(1),
 			iaa.Pad(px=(16, 32), pad_mode=ia.ALL, pad_cval=(0, 128)),
-			iaa.CoarseDropout((0.05, 0.1), size_percent=(0.02, 0.05))
+			iaa.CoarseDropout(0.1, size_percent=0.02)
 		]
 		self.color = [
 			iaa.OneOf([
-				iaa.GammaContrast((0.6,0.8)),
-				iaa.GammaContrast((1.2,1.4)),
-				iaa.GammaContrast((0.6,0.8), per_channel=True),
-				iaa.GammaContrast((1.2,1.4), per_channel=True)
+				iaa.GammaContrast((0.75,1.25)),
+				iaa.GammaContrast((0.95, 1.05), per_channel=True)
 			]),
-			iaa.GaussianBlur(sigma=(1.0, 2.0)),
-			iaa.SaltAndPepper((0.01, 0.025)),
-			iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, 0.025*255)),
-			iaa.AddToHueAndSaturation((-35, 25))
+			# iaa.GaussianBlur(sigma=(1.0, 2.0)),
+			iaa.SaltAndPepper(0.005),
+			iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, 0.025*255))
 		]
 		self.seq = self.aug_sequence(aug_type, probability)
 
@@ -63,63 +60,92 @@ class Augmentation(object):
 
 		return iaa.Sequential(seq, random_order=True)
 
-	def augment_batch(self, images, segmaps):
+	def np2img(self, np_array):
+		return np.clip(np_array, 0, 255)[None,:,:,:]
 
-		segmaps = segmaps + 1
-		images = np.clip(images + 128, 0, 255)
+	def np2segmap(self, np_array, n_classes=12):
+		segmap = np_array.astype(np.uint8)[:,:,0]
+		return ia.SegmentationMapOnImage(segmap, shape=segmap.shape, nb_classes=n_classes + 1)
+
+	def segmap2np(self, segmap):
+		return segmap.get_arr_int().astype(np.float32)[:,:,None]
+
+	def img2np(self, img):
+		return img[0]
+
+	def augment_img_and_segmap(self, img, segmap):
+
+		seq_det = self.seq.to_deterministic()
+		aug_img = seq_det.augment_images(img)
+		aug_segmap = seq_det.augment_segmentation_maps([segmap])[0]
+
+		return aug_img, aug_segmap
+
+	def augment_batch(self, images, segmaps, n_classes=12):
 
 		aug_images = np.zeros(images.shape)
 		aug_segmaps = np.zeros(segmaps.shape)
 
 		for (i, (img, segmap)) in enumerate(zip(images, segmaps)):
-			pass
 
-			aug_img, aug_segmap = self.augment_img(img, segmap)
-			aug_images[i] = aug_img
-			aug_segmaps[i] = aug_segmap
+			img = self.np2img(img)
+			segmap = self.np2segmap(segmap, n_classes)
 
-		return aug_images, aug_segmaps - 1
+			aug_img, aug_segmap = self.augment_img_and_segmap(img, segmap)
 
-	def augment_img(self, img, segmap, n_classes=13):
+			aug_images[i] = self.img2np(aug_img)
+			aug_segmaps[i] = self.segmap2np(aug_segmap)
 
-		img = img[None,:,:,:]
-		segmap = segmap.astype(np.int32)[:,:,0]
-		segmap = ia.SegmentationMapOnImage(segmap, shape=segmap.shape, nb_classes=n_classes)
-		seq_det = self.seq.to_deterministic()
-		aug_img = seq_det.augment_images(img)[0]
-		aug_segmap = seq_det.augment_segmentation_maps([segmap])[0]
-		aug_segmap = aug_segmap.get_arr_int().astype(np.float32)[:,:,None]
+		return aug_images, aug_segmaps
+	#
+	# def plot_augmentations(self, img, segmap, n_classes=12, n=4):
+	#
+	# 	aug_images = []
+	# 	aug_segmaps = []
+	#
+	# 	img = np.clip(img[None,:,:,:] + 128, 0, 255)
+	# 	img = img.astype(np.uint8)
+	# 	segmap = segmap.astype(np.int32)[:,:,0] + 1
+	# 	segmap = ia.SegmentationMapOnImage(segmap, shape=segmap.shape, nb_classes=n_classes)
+	#
+	# 	for _ in range(n):
+	# 		seq_det = self.seq.to_deterministic()
+	# 		aug_images.append(seq_det.augment_images(img)[0])
+	# 		aug_segmaps.append(seq_det.augment_segmentation_maps([segmap])[0])
+	#
+	# 	img = img[0]
+	#
+	# 	cells = []
+	# 	for aug_img, aug_segmap in zip(aug_images, aug_segmaps):
+	# 		aug_img = aug_img.astype(np.uint8)
+	# 		cells.append(img)
+	# 		cells.append(segmap.draw(size=aug_img.shape[:2]))
+	# 		# cells.append(segmap.draw_on_image(img))
+	# 		cells.append(aug_img.astype(np.uint8))
+	# 		cells.append(aug_segmap.draw_on_image(aug_img))
+	#
+	# 	plot = ia.draw_grid(cells, cols=n)
+	#
+	# 	return plot
 
-		return aug_img, aug_segmap
-
-	def plot_augmentations(self, img, segmap, n_classes=13, n=4):
-
-		aug_images = []
-		aug_segmaps = []
-
-		img = np.clip(img[None,:,:,:] + 128, 0, 255)
-		img = img.astype(np.uint8)
-		segmap = segmap.astype(np.int32)[:,:,0] + 1
-		segmap = ia.SegmentationMapOnImage(segmap, shape=segmap.shape, nb_classes=n_classes)
-
-		for _ in range(n):
-			seq_det = self.seq.to_deterministic()
-			aug_images.append(seq_det.augment_images(img)[0])
-			aug_segmaps.append(seq_det.augment_segmentation_maps([segmap])[0])
-
-		img = img[0]
+	def plot_aug_batch(self, imgs, segmaps, aug_imgs, aug_segmaps, n_classes=12, ncols=12):
 
 		cells = []
-		for aug_img, aug_segmap in zip(aug_images, aug_segmaps):
-			aug_img = aug_img.astype(np.uint8)
+		for img, segmap, aug_img, aug_segmap in zip(imgs, segmaps, aug_imgs, aug_segmaps):
+
+			img = self.np2img(img)[0].astype(np.uint8)
+			aug_img = self.np2img(aug_img)[0].astype(np.uint8)
+
+			segmap = self.np2segmap(segmap, n_classes)
+			aug_segmap = self.np2segmap(aug_segmap, n_classes)
+
 			cells.append(img)
-			cells.append(segmap.draw(size=aug_img.shape[:2]))
-			# cells.append(segmap.draw_on_image(img))
-			cells.append(aug_img.astype(np.uint8))
+			# cells.append(segmap.draw(size=aug_img.shape[:2]))
+			cells.append(segmap.draw_on_image(img))
+			cells.append(aug_img)
 			cells.append(aug_segmap.draw_on_image(aug_img))
 
-
-		plot = ia.draw_grid(cells, cols=n)
+		plot = ia.draw_grid(cells, cols=ncols)
 
 		return plot
 
@@ -159,26 +185,3 @@ def class_image(np_array, class_range=(0,12)):
 	colormap = cm.get_cmap(name='nipy_spectral', lut=n_classes).reversed()
 
 	return plt.imshow(np_array[:,:,0], cmap=colormap)
-
-#
-#
-# mmap_mode='r'
-#
-# path = 'data/data_CamVidV300/'
-#
-# data = np.load(path + 'Train_data_CamVid.npy', mmap_mode=mmap_mode)
-# label = np.load(path + 'Train_label_CamVid.npy', mmap_mode=mmap_mode)
-#
-# img = data[0:10,:,:,:]
-# # img = np.clip(img, 0, 255)
-# segmap = label[0:10,:,:,:]
-#
-# aug = Augmentation(aug_type="all", seed=9)
-#
-# aug_img, aug_segmap = aug.augment_batch(img,segmap)
-#
-# print(aug.seq)
-#
-# test = aug.plot_augmentations(img[0], segmap[0], n=8)
-# rgb_image(test.astype(np.float32))
-# plt.show()

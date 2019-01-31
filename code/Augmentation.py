@@ -38,7 +38,7 @@ class Augmentation(object):
 			aug_data[i,:,:,:], aug_label[i,:,:,:], infos = self.augment_img(data[i,:,:,:], label[i,:,:,:])
 			augmentation_infos.append(infos)
 
-		return data, label, augmentation_infos
+		return aug_data, aug_label, augmentation_infos
 
 
 	def augment_img(self, data, label):
@@ -151,7 +151,7 @@ class Augment_Type(dict):
 
 
 class Shape(Augment_Type):
-	
+
 	crop_max_delta = 0.5
 	crop_deviation = 0.1
 	cut_max_delta = 0.5

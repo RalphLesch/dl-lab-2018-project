@@ -91,7 +91,7 @@ def main():
 			I_tot = 0.0
 			U_tot = 0.0
 
-			final_seg_maps = numpy.zeros((imgs.shape[0],FLAGS.img_height, FLAGS.img_width))
+			final_seg_maps = np.zeros((imgs.shape[0],FLAGS.img_height, FLAGS.img_width))
 
 			for test_idx in range(imgs.shape[0]):
 				#timer counter

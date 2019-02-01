@@ -110,7 +110,7 @@ def main():
 				segmentationMask_flat = segmentationMask.reshape(FLAGS.img_height*FLAGS.img_width)
 				segmentationMask = segmentationMask.reshape(FLAGS.img_height, FLAGS.img_width)
 
-				if FLAGS.Save_Segmentation and test_idx + 1 == imgs.shape[0]:
+				if FLAGS.Save_Segmentation and i + 1 == number_of_iter:
 					final_seg_maps[test_idx] = np.round(segmentationMask)
 
 				label_instance = label[test_idx,:, :].argmax(axis=1)

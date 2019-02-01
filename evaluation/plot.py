@@ -14,7 +14,12 @@ def get_data(file):
 
 
 def plot_all_checkpoint_IoU(args):
-	file_paths = glob(os.path.join(args.checkpoints, 'testIoU.txt'))
+	
+	file_paths = args.checkpoints
+	if isinstance(file_paths, str):
+		file_paths = glob(os.path.join(file_paths, 'testIoU.txt'))
+	else:
+		file_paths = [s + 'testIoU.txt' for s in file_paths]
 	names = [os.path.basename(os.path.dirname(f)) for f in file_paths]
 	
 	args.file = file_paths
@@ -44,6 +49,9 @@ def plot(args):
             plt.plot([], [])
     
     for i, (file, title, label) in enumerate(zip(args.file, args.title, args.labels)):
+        if not os.path.exists(file):
+            print(file + ' not found!')
+            continue
         data = get_data(file)
         
         extra = {'label': label} if label else {}

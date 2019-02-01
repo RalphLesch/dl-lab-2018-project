@@ -73,6 +73,8 @@ def main():
 		output_path = FLAGS.test_dir if FLAGS.test_dir else FLAGS.model_path
 		name = os.path.join(output_path, FLAGS.IoU_filename)
 		seg_name = os.path.join(output_path, FLAGS.Seg_filename)
+		if not os.path.exists(output_path):
+			os.makedirs(output_path)
 		f= open(name,"w+")
 
 		number_of_iter = int((FLAGS.higher_iter - FLAGS.lower_iter) / 1000) + 1

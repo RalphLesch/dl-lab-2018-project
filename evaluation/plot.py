@@ -99,14 +99,14 @@ def plot(args):
 	
 
 if __name__ == "__main__":
-    default_checkpoint_dir = '../code/checkpoints/*'
+    default_tests_dir = '../code/tests/*'
     parser = argparse.ArgumentParser()
     
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--file', type=str, nargs='+',
                         help='result json file(s)')
-    group.add_argument('--checkpoints', type=str, nargs='*', metavar='CHECKPOINT_DIRS',
-                        help=('testIoU.txt files under CHECKPOINT_DIRS, default: ' + default_checkpoint_dir))
+    group.add_argument('--tests', type=str, nargs='*', metavar='TEST_DIRS',
+                        help=('testIoU.txt files under TEST_DIRS, default: ' + default_tests_dir))
     
     parser.add_argument('-t', '--title', type=str, nargs='*',
                         help='title of the plot, defaults to filename')

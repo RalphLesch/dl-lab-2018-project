@@ -37,6 +37,8 @@ flags.DEFINE_integer("lower_iter", 1000, "initial iteration to be tested - defau
 flags.DEFINE_integer("higher_iter", 40000, "final iteration to be tested - default 40000")
 flags.DEFINE_string("IoU_filename", "testIoU.txt", "Nane to save the IoU and Iterattion [default is testIoU.txt]")
 flags.DEFINE_integer("configuration", 4, "Set of configurations decoder [default is 4 - full decoder], other options are [1,2,3]")
+flags.DEFINE_boolean("Save_Segmentation", False, "Save the segmentation masks that are predicted by the network as .npy file")
+flags.DEFINE_string("Seg_filename", "seg_prediction.npy", "Name to save the .npy file with predicted segmentations")
 
 FLAGS = flags.FLAGS
 
@@ -68,6 +70,7 @@ def main():
 
 		#Create text file
 		name = FLAGS.model_path + '/' + FLAGS.IoU_filename
+		seg_name = FLAGS.model_path + '/' + FLAGS.Seg_filename
 		f= open(name,"w+")
 
 		number_of_iter = int((FLAGS.higher_iter - FLAGS.lower_iter) / 1000) + 1
@@ -88,6 +91,8 @@ def main():
 			I_tot = 0.0
 			U_tot = 0.0
 
+			final_seg_maps = np.zeros((imgs.shape[0],FLAGS.img_height, FLAGS.img_width))
+
 			for test_idx in range(imgs.shape[0]):
 				#timer counter
 				start_time = time.time()
@@ -100,7 +105,9 @@ def main():
 				segmentationMask = pred.argmax(axis=1)
 				segmentationMask_flat = segmentationMask.reshape(FLAGS.img_height*FLAGS.img_width)
 				segmentationMask = segmentationMask.reshape(FLAGS.img_height, FLAGS.img_width)
-				#print(segmentationMask.shape)
+
+				if FLAGS.Save_Segmentation and test_idx + 1 == imgs.shape[0]:
+					final_seg_maps[test_idx] = np.round(segmentationMask)
 
 				label_instance = label[test_idx,:, :].argmax(axis=1)
 				label_instance = label_instance.reshape(FLAGS.img_height*FLAGS.img_width)
@@ -133,13 +140,13 @@ def main():
 			I_tot=I_tot[:]
 			U_tot=U_tot[:]
 
-
 			print("Test IoU == ", (I_tot / U_tot))
 			print("Test IoU == ", np.mean(I_tot / U_tot))
 			Test_IoU = np.mean(I_tot / U_tot)
 			iter_T = int(FLAGS.lower_iter) + (i*1000)
-			f.write( str(iter_T) + ' ' + str(Test_IoU) + '\n' )
+			f.write( str(iter_T) + ' ' + str(Test_IoU) + ' ' + str(Global_accuracy/imgs.shape[0]) + '\n' )
 
+		np.save(seg_name, final_seg_maps)
 
 	f.close()
 

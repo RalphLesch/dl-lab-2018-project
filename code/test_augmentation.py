@@ -8,15 +8,15 @@ from imgaug import augmenters as iaa
 
 mmap_mode='r'
 
-path = 'data/data_CamVidV300/'
+# path = 'data/data_CamVidV300/'
 
-data = np.load(path + 'Train_data_CamVid.npy', mmap_mode=mmap_mode)
-label = np.load(path + 'Train_label_CamVid.npy', mmap_mode=mmap_mode)
-
-seed=88
-
-img = data[389,:,:,:][None,:,:,:] + 128
-segmap = label[389,:,:,:][None,:,:,:] + 1
+# data = np.load(path + 'Train_data_CamVid.npy', mmap_mode=mmap_mode)
+# label = np.load(path + 'Train_label_CamVid.npy', mmap_mode=mmap_mode)
+#
+# seed=88
+#
+# img = data[389,:,:,:][None,:,:,:] + 128
+# segmap = label[389,:,:,:][None,:,:,:] + 1
 
 # img -= np.min(img)
 # img /= np.max(img)
@@ -58,80 +58,99 @@ segmap = label[389,:,:,:][None,:,:,:] + 1
 #
 
 # ------------------------------------------------------------------------------
+#
+# sequences = [
+#
+# 	iaa.Sequential([
+# 		iaa.Fliplr(1),
+# 		iaa.CoarseDropout(0.1, size_percent=0.02)
+# 	], random_order=True),
+#
+# 	iaa.Sequential([
+# 		iaa.Crop(px=54),
+# 		iaa.Pad(px=16, pad_mode=ia.ALL, pad_cval=(0, 128)),
+# 	], random_order=False),
+#
+# 	iaa.Sequential([
+# 		iaa.GammaContrast(0.92),
+# 		iaa.AdditiveGaussianNoise(loc=0, scale=(0.02*255))
+# 	], random_order=True),
+#
+# 	iaa.Sequential([
+# 		iaa.SaltAndPepper(0.005),
+# 		iaa.GammaContrast((1.05), per_channel=True)
+# 	], random_order=True),
+#
+# 	iaa.Sequential([
+# 		iaa.CoarseDropout(0.1, size_percent=0.02),
+# 		iaa.GammaContrast((0.95), per_channel=True),
+# 		iaa.Fliplr(1),
+# 		iaa.Crop(px=34),
+# 	], random_order=True),
+#
+# 	iaa.Sequential([
+# 		iaa.GammaContrast((1.19)),
+# 		iaa.SaltAndPepper(0.005),
+# 		iaa.Pad(px=20, pad_mode=ia.ALL, pad_cval=(0, 128)),
+# 		iaa.AdditiveGaussianNoise(loc=0, scale=(0.015*255))
+# 	], random_order=True)
+# ]
+#
+# imgs = np.repeat(img, len(sequences), axis=0)
+# imgs = imgs.reshape((len(sequences),300,300,3))
+# segmaps = np.repeat(segmap, len(sequences), axis=0)
+# segmaps = segmaps.reshape((len(sequences),300,300,1))
+#
+# def augment(img, segmap, seq):
+#
+# 	seq_det = seq.to_deterministic()
+# 	aug_img = seq_det.augment_images(img)
+# 	aug_segmap = seq_det.augment_segmentation_maps([segmap])[0]
+#
+# 	return aug_img, aug_segmap
+#
+# segmap = aug2.np2segmap(segmap[0])
+#
+#
+# # for i in range(420,440):
+# # 	print(i)
+# ia.seed(439)
+#
+# aug_imgs2 = np.zeros((len(sequences), 300, 300, 3))
+# aug_segmaps2 = np.zeros((len(sequences), 300, 300, 1))
+#
+# for i, seq in enumerate(sequences):
+# 	aug_img, aug_segmap = augment(img, segmap, seq)
+# 	aug_imgs2[i] = aug2.img2np(aug_img)
+# 	aug_segmaps2[i] = aug2.segmap2np(aug_segmap)
+#
+# plot = plot_aug_batch(imgs[:6], segmaps[:6], aug_imgs2, aug_segmaps2, ncols=4)
+#
+# plt.figure(figsize=(16,24), dpi=300)
+# rgb_image(plot.astype(np.float32))
+#
+# plt.savefig("../poster/figures/imgaug_example2.png")
+# plt.savefig("../poster/figures/imgaug_example2.pdf")
+# plt.savefig("../poster/figures/imgaug_example2.svg")
+#
+# plt.axis('off')
+# plt.show()
 
-sequences = [
+# ------------------------------------------------------------------------------
 
-	iaa.Sequential([
-		iaa.Fliplr(1),
-		iaa.CoarseDropout(0.1, size_percent=0.02)
-	], random_order=True),
+path = './../../DeepLearningLab/project/data/CamVid300/'
 
-	iaa.Sequential([
-		iaa.Crop(px=54),
-		iaa.Pad(px=16, pad_mode=ia.ALL, pad_cval=(0, 128)),
-	], random_order=False),
-
-	iaa.Sequential([
-		iaa.GammaContrast(0.92),
-		iaa.AdditiveGaussianNoise(loc=0, scale=(0.02*255))
-	], random_order=True),
-
-	iaa.Sequential([
-		iaa.SaltAndPepper(0.005),
-		iaa.GammaContrast((1.05), per_channel=True)
-	], random_order=True),
-
-	iaa.Sequential([
-		iaa.CoarseDropout(0.1, size_percent=0.02),
-		iaa.GammaContrast((0.95), per_channel=True),
-		iaa.Fliplr(1),
-		iaa.Crop(px=34),
-	], random_order=True),
-
-	iaa.Sequential([
-		iaa.GammaContrast((1.19)),
-		iaa.SaltAndPepper(0.005),
-		iaa.Pad(px=20, pad_mode=ia.ALL, pad_cval=(0, 128)),
-		iaa.AdditiveGaussianNoise(loc=0, scale=(0.015*255))
-	], random_order=True)
-]
-
-imgs = np.repeat(img, len(sequences), axis=0)
-imgs = imgs.reshape((len(sequences),300,300,3))
-segmaps = np.repeat(segmap, len(sequences), axis=0)
-segmaps = segmaps.reshape((len(sequences),300,300,1))
-
-def augment(img, segmap, seq):
-
-	seq_det = seq.to_deterministic()
-	aug_img = seq_det.augment_images(img)
-	aug_segmap = seq_det.augment_segmentation_maps([segmap])[0]
-
-	return aug_img, aug_segmap
-
-segmap = aug2.np2segmap(segmap[0])
+data = (np.load(path + 'Test_data_CamVidV300.npy', mmap_mode=mmap_mode) + 128)[:,:,:,::-1]
 
 
-# for i in range(420,440):
-# 	print(i)
-ia.seed(439)
+label = np.load(path + 'Test_label_CamVidV300.npy', mmap_mode=mmap_mode) + 1
+prediction = (np.load('test/imgaug/seg_prediction.npy') + 1)[:,:,:,None]
 
-aug_imgs2 = np.zeros((len(sequences), 300, 300, 3))
-aug_segmaps2 = np.zeros((len(sequences), 300, 300, 1))
+print(np.min(prediction[230:]), np.max(prediction[230:]))
 
-for i, seq in enumerate(sequences):
-	aug_img, aug_segmap = augment(img, segmap, seq)
-	aug_imgs2[i] = aug2.img2np(aug_img)
-	aug_segmaps2[i] = aug2.segmap2np(aug_segmap)
-
-plot = plot_aug_batch(imgs[:6], segmaps[:6], aug_imgs2, aug_segmaps2, ncols=4)
-
+plot = plot_prediction(data[231:], label[231:], prediction[231:])
 plt.figure(figsize=(16,24), dpi=300)
 rgb_image(plot.astype(np.float32))
-
-plt.savefig("../poster/figures/imgaug_example2.png")
-plt.savefig("../poster/figures/imgaug_example2.pdf")
-plt.savefig("../poster/figures/imgaug_example2.svg")
 
 plt.axis('off')
 plt.show()

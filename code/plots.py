@@ -3,7 +3,7 @@ import imgaug as ia
 from matplotlib import cm, pyplot as plt
 from imgaug_augmentation import Augmentation as aug
 
-def plot_aug_batch(imgs, segmaps, aug_imgs, aug_segmaps, seed=1, type="all", probability=0.9, n_classes=12, ncols=12):
+def plot_aug_batch(imgs, segmaps, aug_imgs, aug_segmaps, n_classes=12, ncols=12):
 
 	cells = []
 	for img, segmap, aug_img, aug_segmap in zip(imgs, segmaps, aug_imgs, aug_segmaps):
@@ -19,6 +19,24 @@ def plot_aug_batch(imgs, segmaps, aug_imgs, aug_segmaps, seed=1, type="all", pro
 		cells.append(segmap.draw_on_image(img, alpha=0.5))
 		cells.append(aug_img)
 		cells.append(aug_segmap.draw_on_image(aug_img, alpha=0.5))
+
+	plot = ia.draw_grid(cells, cols=ncols)
+
+	return plot
+
+def plot_prediction(imgs, segmaps, predictions, n_classes=12, ncols=3):
+
+	cells = []
+	for img, segmap, pred in zip(imgs, segmaps, predictions):
+
+		img = aug.np2img(img)[0].astype(np.uint8)
+		segmap = aug.np2segmap(segmap, n_classes)
+		pred = aug.np2segmap(pred, n_classes)
+
+		cells.append(img)
+		# cells.append(segmap.draw(size=aug_img.shape[:2]))
+		cells.append(segmap.draw_on_image(img, alpha=0.5))
+		cells.append(pred.draw_on_image(img, alpha=0.5))
 
 	plot = ia.draw_grid(cells, cols=ncols)
 

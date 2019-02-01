@@ -39,6 +39,7 @@ flags.DEFINE_string("IoU_filename", "testIoU.txt", "Nane to save the IoU and Ite
 flags.DEFINE_integer("configuration", 4, "Set of configurations decoder [default is 4 - full decoder], other options are [1,2,3]")
 flags.DEFINE_boolean("Save_Segmentation", False, "Save the segmentation masks that are predicted by the network as .npy file")
 flags.DEFINE_string("Seg_filename", "seg_prediction.npy", "Name to save the .npy file with predicted segmentations")
+flags.DEFINE_string("test_dir", "", "Directory name to save test files - defaults to model_path")
 
 FLAGS = flags.FLAGS
 
@@ -69,8 +70,11 @@ def main():
 		#sess.run(initializer)
 
 		#Create text file
-		name = FLAGS.model_path + '/' + FLAGS.IoU_filename
-		seg_name = FLAGS.model_path + '/' + FLAGS.Seg_filename
+		output_path = FLAGS.test_dir if FLAGS.test_dir else FLAGS.model_path
+		name = os.path.join(output_path, FLAGS.IoU_filename)
+		seg_name = os.path.join(output_path, FLAGS.Seg_filename)
+		if not os.path.exists(output_path):
+			os.makedirs(output_path)
 		f= open(name,"w+")
 
 		number_of_iter = int((FLAGS.higher_iter - FLAGS.lower_iter) / 1000) + 1

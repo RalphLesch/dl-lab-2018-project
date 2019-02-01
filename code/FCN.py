@@ -393,11 +393,9 @@ class FCN_SS(object):
 
 		print(test_path)
 		test_data = np.load(test_path)
-
+		test_data = test_data.reshape((test_data.shape[0], self.height, self.width, 3))
 		if opt.reverse_colors:
 			test_data = test_data[:,:,:,::-1]
-
-		test_data = test_data.reshape((test_data.shape[0], self.height, self.width, 3))	
 		print(test_data.shape)
 
 		test_label_path = opt.dataset_dir + 'Test_label_' + opt.dataset + '.npy'

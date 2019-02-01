@@ -40,6 +40,7 @@ flags.DEFINE_integer("configuration", 4, "Set of configurations decoder [default
 flags.DEFINE_boolean("Save_Segmentation", False, "Save the segmentation masks that are predicted by the network as .npy file")
 flags.DEFINE_string("Seg_filename", "seg_prediction.npy", "Name to save the .npy file with predicted segmentations")
 flags.DEFINE_string("test_dir", "", "Directory name to save test files - defaults to model_path")
+flags.DEFINE_boolean("reverse_colors", False, "Reverse the channels of the test images from bgr to rgb")
 
 FLAGS = flags.FLAGS
 

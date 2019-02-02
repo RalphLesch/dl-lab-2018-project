@@ -5,6 +5,7 @@ import sys
 import os
 from glob import glob
 import matplotlib.pyplot as plt
+import itertools
 
 def get_data(file):
     with open(file) as f:
@@ -15,11 +16,13 @@ def get_data(file):
 
 def plot_all_checkpoint_IoU(args):
 	
-	file_paths = args.checkpoints
+	file_paths = args.tests
+	print(file_paths)
 	if isinstance(file_paths, str):
 		file_paths = glob(os.path.join(file_paths, 'testIoU.txt'))
 	else:
-		file_paths = [s + 'testIoU.txt' for s in file_paths]
+		file_paths = list(itertools.chain.from_iterable(glob(os.path.join(s, 'testIoU.txt')) for s in file_paths))
+	print(file_paths)
 	names = [os.path.basename(os.path.dirname(f)) for f in file_paths]
 	
 	args.file = file_paths
@@ -84,22 +87,22 @@ def plot(args):
                 print('Showing', title or file, sep=' ')
                 plt.show()
     if args.merge:
-        plt.legend()
-        #plt.legend(bbox_to_anchor=(0.95, 0.85))  # CUSTOM
-
+        #plt.legend()
+        plt.legend(bbox_to_anchor=(1.04,1), loc="upper left")  # CUSTOM: outer top right
+		
         plt.ylabel(args.ylabel)
         plt.xlabel(args.xlabel)
         if args.output or args.output == '':
             outputName = '{}.{}'.format((args.output or title or os.path.splitext(args.file[0])[0] + '_merged'), args.format)
             print('Saving ' + outputName)
-            plt.savefig(outputName)
+            plt.savefig(outputName, bbox_inches="tight")
         if not args.noplot:
             print('Showing', title or file, sep=' ')
             plt.show()
 	
 
 if __name__ == "__main__":
-    default_tests_dir = '../code/tests/*'
+    default_tests_dir = '../code/test/*'
     parser = argparse.ArgumentParser()
     
     group = parser.add_mutually_exclusive_group(required=True)
@@ -134,8 +137,8 @@ if __name__ == "__main__":
     	plt.switch_backend(args.backend)
     
     if args.file is None:
-    	if not args.checkpoints:
-    		args.checkpoints = default_checkpoint_dir
+    	if not args.tests:
+    		args.tests = default_tests_dir
     	plot_all_checkpoint_IoU(args)
     else:
     	plot(args)

@@ -8,12 +8,16 @@ from imgaug import augmenters as iaa
 
 mmap_mode='r'
 
-# path = 'data/data_CamVidV300/'
+seed=88
 
+np.random.seed(seed)
+
+# path = 'data/data_CamVidV300/'
+#
 # data = np.load(path + 'Train_data_CamVid.npy', mmap_mode=mmap_mode)
 # label = np.load(path + 'Train_label_CamVid.npy', mmap_mode=mmap_mode)
-#
-# seed=88
+
+
 #
 # img = data[389,:,:,:][None,:,:,:] + 128
 # segmap = label[389,:,:,:][None,:,:,:] + 1
@@ -144,13 +148,27 @@ data = (np.load(path + 'Test_data_CamVidV300.npy', mmap_mode=mmap_mode) + 128)[:
 
 
 label = np.load(path + 'Test_label_CamVidV300.npy', mmap_mode=mmap_mode) + 1
-prediction = (np.load('test/imgaug/seg_prediction.npy') + 1)[:,:,:,None]
 
-print(np.min(prediction[230:]), np.max(prediction[230:]))
+pred_none = (np.load('test/none_small/seg_prediction.npy') + 1)[:,:,:,None]
+pred_all = (np.load('test/imgaug_small/seg_prediction.npy') + 1)[:,:,:,None]
+pred_color = (np.load('test/imgaug_color_small/seg_prediction.npy') + 1)[:,:,:,None]
+pred_shape = (np.load('test/imgaug_shape_small/seg_prediction.npy') + 1)[:,:,:,None]
 
-plot = plot_prediction(data[231:], label[231:], prediction[231:])
-plt.figure(figsize=(16,24), dpi=300)
+# ind = np.random.randint(0, data.shape[0], 4)
+ind = [207, 177]
+
+plot = plot_prediction(data[ind], label[ind], pred_none[ind], pred_shape[ind], pred_color[ind], pred_all[ind])
+plt.figure(figsize=(12,4), dpi=300)
 rgb_image(plot.astype(np.float32))
 
-plt.axis('off')
+# plt.axis('off')
+
+plt.savefig("../poster/figures/prediction.png")
+plt.savefig("../poster/figures/prediction.pdf")
+plt.savefig("../poster/figures/prediction.svg")
+
+
 plt.show()
+
+# rgb_image(data2[0])
+# plt.show()

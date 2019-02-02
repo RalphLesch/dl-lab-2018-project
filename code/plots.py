@@ -24,19 +24,25 @@ def plot_aug_batch(imgs, segmaps, aug_imgs, aug_segmaps, n_classes=12, ncols=12)
 
 	return plot
 
-def plot_prediction(imgs, segmaps, predictions, n_classes=12, ncols=3):
+def plot_prediction(imgs, segmaps, preds_none, preds_shape, preds_color, preds_all, n_classes=12, ncols=6):
 
 	cells = []
-	for img, segmap, pred in zip(imgs, segmaps, predictions):
+	for img, segmap, predn, preds, predc, preda in zip(imgs, segmaps, preds_none, preds_shape, preds_color, preds_all):
 
 		img = aug.np2img(img)[0].astype(np.uint8)
 		segmap = aug.np2segmap(segmap, n_classes)
-		pred = aug.np2segmap(pred, n_classes)
+		predn = aug.np2segmap(predn, n_classes)
+		preds = aug.np2segmap(preds, n_classes)
+		predc = aug.np2segmap(predc, n_classes)
+		preda = aug.np2segmap(preda, n_classes)
 
 		cells.append(img)
 		# cells.append(segmap.draw(size=aug_img.shape[:2]))
 		cells.append(segmap.draw_on_image(img, alpha=0.5))
-		cells.append(pred.draw_on_image(img, alpha=0.5))
+		cells.append(predn.draw_on_image(img, alpha=0.5))
+		cells.append(preds.draw_on_image(img, alpha=0.5))
+		cells.append(predc.draw_on_image(img, alpha=0.5))
+		cells.append(preda.draw_on_image(img, alpha=0.5))
 
 	plot = ia.draw_grid(cells, cols=ncols)
 

@@ -91,16 +91,20 @@ In our case study we use a hierarchical encoder-decoder network with skip connec
     \item \textbf{Color Augmentation} by varying the intensity values (Adjustment of Brightness and Contrast, Color shifts)
     \item \textbf{Shape and Color Augmentation}
 \end{enumerate} 
+
+%\vspace{5}
+
 }
+
 
 
 \headerbox{3. Training}{name=training,column=0,below=architecture,span=1}{
 
-The network is trained on CamVid dataset, which contains ???? different labeled images. To allow for a fair comparison between the 4 different configurations, we use the same hyperparameters (namely the total amount of iterations and batch size) for all types of augmentation. Batches are created by sampling images from the original dataset with pseudo-random numbers and then applying augmentations for setting (2) - (4) on 90\% of the images. 
+The network is trained on the CamVid dataset which contains ???? (manually) labeled images. To allow for a fair comparison between our different configurations (1) - (4), we use the same hyperparameters (namely the total amount of iterations and batch size) for all types of augmentations. Batches are created by sampling images from the original dataset with pseudo-random numbers and then applying augmentations for setting (2) - (4) on 90\% of the images. In order to investigate the effect of applying augmentation on sparse data we train the network (I) on the full dataset and (II) with a small subset of 468 images.
 
 \begin{center}
     \includegraphics[width=0.9\linewidth]{cnn.pdf}
-    \captionof{figure}{Configuration for both shape and color augmentations. Modified images are fed into the encode-decoder network with skip connections.}
+    \captionof{figure}{Configuration (4) with shape and color augmentations.  90\% of all images are randomly modified and fed into the encoder-decoder network with skip connections.}
 \end{center}
 
 }
@@ -110,17 +114,16 @@ The network is trained on CamVid dataset, which contains ???? different labeled 
 
 \begin{wrapfigure}{l}{0.45\textwidth}
     \begin{center}
-        \includegraphics[width=0.9\linewidth]{augmentation.pdf}
-        \caption{Different types of augmentation applied to a single image. From left to right: original image, orignal segmentation map, augmented image, augmented segmentation map.}
+        \includegraphics[width=0.8\linewidth]{augmentation.pdf}
+        \caption{Different types of augmentations. From left: original image,  original segmentation map, augmented image and augmented segmentation map.}
     \end{center}
 \end{wrapfigure}
 
 To facilitate multiple independent modifications $A_k$ (e.g. cropping and flipping an image) we implemented our own probabilistic framework based on the principle of inclusion and exclusion, where:
 %\[P(A_i \cup A_j) = P(A_i) + P(A_j) - P(A_i \cap A_j)\] \[= 2\cdot P(A_i) - P(A_i)^2\] or in more general form: 
 \[P\left(\bigcup_{k=1}^{n} A_k\right) = \sum_{k=1}^{n} (-1)^{(k+1)} \begin{pmatrix} n \\ k \\\end{pmatrix}P(A_k)^k,\]
-which randomly selects different types of augmentations in varying order. We use the same probability for shape or color modification when investigating setting (4). Because of storage limitations all augmentations are calculated \textit{"on the fly"} using {\color{darkblue} Python 3.?} together with the {\color{darkblue} Numpy}, {\color{darkblue} Scipy}, {\color{darkblue} OpenCV} and {\color{darkblue} Scikit-Image} packages, before feeding them into the CNN.
-
-In order to parametrize shape and color modifications we draw samples from different types of distribution (uniform distribution, truncated normal distribution and truncated exponential distribution) depending on the type of augmentation. Hyperparameters (scale and marginal values of the distributions) are adjusted by manually applying random augmentations on some arbitrary images of the CamVid dataset. The range of possible modifications is thereby limited to realistic variations that correspond to natural changes of lightning conditions and scale transformations. Cutout and cropping operations are chosen to cover at most 1/4 of all pixels.
+which randomly selects different types of augmentations in varying order. We use the same probability for shape or color modification when investigating setting (4). Because of storage limitations all augmentations are calculated \textit{"on the fly"} using {\color{darkblue} Python 3.5} together with {\color{darkblue} Numpy}, {\color{darkblue} Scipy} and the {\color{darkblue} Imgaug} package, before feeding the batches into the CNN.
+In order to parametrize shape and color modifications we draw samples from uniform distribution. Upper and lower bounds are adjusted by manually applying augmentations on different images of the CamVid dataset. The range of possible modifications is thereby limited to realistic variations that correspond to natural changes of lightning conditions and scale transformations. Cutout and padding modifications are chosen to cover at most 1/10 resp 1/3 of all pixels.
 
 \vspace{20px}
 

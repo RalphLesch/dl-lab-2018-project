@@ -713,8 +713,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.64"
-     inkscape:cx="656.51146"
-     inkscape:cy="379.52268"
+     inkscape:cx="686.87816"
+     inkscape:cy="385.02027"
      inkscape:document-units="mm"
      inkscape:current-layer="g13072"
      showgrid="true"
@@ -755,7 +755,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -852,16 +852,16 @@
          style="opacity:1;vector-effect:none;fill:#9e9e9e;fill-opacity:0.50196078;stroke:#000000;stroke-width:0.82020831;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:7.05555534px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-         x="129.37027"
-         y="-206.39052"
+         style="font-style:normal;font-weight:normal;font-size:7.05555534px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+         x="315.13156"
+         y="-211.68217"
          id="text13106"
          transform="rotate(90)"><tspan
            sodipodi:role="line"
            id="tspan13104"
-           x="129.37027"
-           y="-206.39052"
-           style="font-size:7.05555534px;stroke-width:0.26458332">color</tspan></text>
+           x="315.13156"
+           y="-211.68217"
+           style="font-size:7.05555534px;text-align:center;text-anchor:middle;stroke-width:0.26458332">skip connection</tspan></text>
       <text
          xml:space="preserve"
          style="font-style:normal;font-weight:normal;font-size:7.05555534px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
@@ -1037,7 +1037,7 @@
            id="tspan13104-33-9-4-7"
            x="126.60381"
            y="461.02618"
-           style="font-size:7.05555534px;text-align:center;text-anchor:middle;stroke-width:0.26458332">Outout Segmentation Map</tspan></text>
+           style="font-size:7.05555534px;text-align:center;text-anchor:middle;stroke-width:0.26458332">Output Segmentation Map</tspan></text>
       <path
          style="fill:none;stroke:#000000;stroke-width:0.82020831;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker14751)"
          d="m 137.58334,183.22918 v 7.9375"

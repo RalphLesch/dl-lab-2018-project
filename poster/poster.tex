@@ -89,7 +89,7 @@ In our case study we use a hierarchical encoder-decoder network with skip connec
     \item \textbf{No Augmentation}
     \item \textbf{Shape Augmentation} by applying different geometric transformation and dropouts (Horizontal Flip, Scaling, Crop and Padding, rectangular Cutouts)
     \item \textbf{Color Augmentation} by varying the intensity values (Adjustment of Brightness and Contrast, Color shifts)
-    \item \textbf{Shape and Color Augmentation}
+    \item \textbf{Shape \& Color Augmentation}
 
 \end{enumerate} 
 
@@ -100,11 +100,11 @@ In our case study we use a hierarchical encoder-decoder network with skip connec
 
 \headerbox{3. Training}{name=training,column=0,below=architecture,span=1}{
 
-The network is trained on the CamVid dataset which contains ???? (manually) labeled images. To allow for a fair comparison between our different configurations (1) - (4), we use the same hyperparameters (namely the total amount of iterations and batch size) for all types of augmentations. Batches are created by sampling images from the original dataset with pseudo-random numbers and then applying augmentations for setting (2) - (4) on 90\% of the images. In order to investigate the effect of applying augmentation on sparse data we train the network (I) on the full dataset and (II) with a small subset of 468 images.
+The network is trained on the CamVid dataset which contains 7707 (manually) labeled images. To allow for a fair comparison between our different configurations (1) - (4), we use the same hyperparameters (namely the total amount of iterations and batch size) for all types of augmentations. Batches are created by sampling images from the original dataset with pseudo-random numbers and then applying augmentations for setting (2) - (4) on 90\% of the images. In order to investigate the effect of applying augmentation on sparse data we train the network (I) on the full dataset and (II) with a small subset of 468 images.
 
 \begin{center}
     \includegraphics[width=0.9\linewidth]{cnn.pdf}
-    \captionof{figure}{Configuration (4) with shape and color augmentations.  90\% of all images are randomly modified and fed into the encoder-decoder network with skip connections.}
+    \captionof{figure}{Configuration (4) with shape \& color augmentations.  90\% of all images are randomly modified and fed into the encoder-decoder network with skip connections.}
 \end{center}
 
 }
@@ -132,20 +132,25 @@ In order to parametrize shape and color modifications we draw samples from unifo
 
 \headerbox{5. Results}{name=results,span=2,column=1,below=examples}{ 
 
-\begin{wrapfigure}{l}{0.58\textwidth}
+\begin{wrapfigure}{l}{0.5\textwidth}
     \begin{center}
-        \includegraphics[width=0.9\linewidth]{prediction.pdf}
-        \caption{ Images and predicted segmentation maps of the test dataset. From left: original image and segmentation map, predicted segmentation maps of the CNN without augmentation, with shape, with color and with shape \& color augmentation.}
+        \includegraphics[width=\linewidth]{prediction.pdf}
+        \caption{ Images and predicted segmentation maps for the test data. From left: original image and segmentation map, predictions without augmentation, with shape, color, shape \& color augmentations.}
     \end{center}
 \end{wrapfigure}
 
-...
-\vspace{190px}
+We observe a different performance of the network for configurations (1) - (4) when trained either on the small or on the full dataset. If a large amount of data is available (I), the learning curves show similar trajectories. With sparse training data (II) randomly applied augmentations have a positive effect on the quality of network predictions. However the gain in performance is not enough to achieve results that are as accurate as with a larger and more variable dataset.
+\vspace{50px}
 
 }
 
 
 \headerbox{6. Conclusions}{name=conclusion,column=1,below=results,span=2,above=bottom}{
+
+\begin{itemize}
+    \item Random modifications applied on sparse datasets can improve performance of CNNs
+    \item Parameters for different augmentations must be chosen carefully to have the best positive effects and might be optimized with hyperparameter optimization methods
+\end{itemize}
 
 }
 

@@ -14,7 +14,12 @@ def get_data(file):
 
 
 def plot_all_checkpoint_IoU(args):
-	file_paths = glob(os.path.join(args.checkpoints, 'testIoU.txt'))
+	
+	file_paths = args.checkpoints
+	if isinstance(file_paths, str):
+		file_paths = glob(os.path.join(file_paths, 'testIoU.txt'))
+	else:
+		file_paths = [s + 'testIoU.txt' for s in file_paths]
 	names = [os.path.basename(os.path.dirname(f)) for f in file_paths]
 	
 	args.file = file_paths
@@ -44,6 +49,9 @@ def plot(args):
             plt.plot([], [])
     
     for i, (file, title, label) in enumerate(zip(args.file, args.title, args.labels)):
+        if not os.path.exists(file):
+            print(file + ' not found!')
+            continue
         data = get_data(file)
         
         extra = {'label': label} if label else {}
@@ -91,14 +99,14 @@ def plot(args):
 	
 
 if __name__ == "__main__":
-    default_checkpoint_dir = '../code/checkpoints/*'
+    default_tests_dir = '../code/test/*'
     parser = argparse.ArgumentParser()
     
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--file', type=str, nargs='+',
                         help='result json file(s)')
-    group.add_argument('--checkpoints', type=str, nargs='*', metavar='CHECKPOINT_DIRS',
-                        help=('testIoU.txt files under CHECKPOINT_DIRS, default: ' + default_checkpoint_dir))
+    group.add_argument('--tests', type=str, nargs='*', metavar='TEST_DIRS',
+                        help=('testIoU.txt files under TEST_DIRS, default: ' + default_tests_dir))
     
     parser.add_argument('-t', '--title', type=str, nargs='*',
                         help='title of the plot, defaults to filename')
@@ -124,7 +132,7 @@ if __name__ == "__main__":
     
     if args.backend:
     	plt.switch_backend(args.backend)
-    
+            
     if args.file is None:
     	if not args.checkpoints:
     		args.checkpoints = default_checkpoint_dir

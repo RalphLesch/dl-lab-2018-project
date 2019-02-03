@@ -156,7 +156,7 @@ if __name__ == "__main__":
 	parser.add_argument('--xlim', type=int, nargs=2, metavar=('LEFT', 'RIGHT'),
 						help='x axis limits left and right', default=None)
 	parser.add_argument('--legendbelow', type=int, nargs='?', metavar='NCOLUMNS',
-					help='put legend of merged plots below graph, with NCOLUMNS (default=4)', default=4)
+					help='put legend of merged plots below graph, with NCOLUMNS, default: 4', const=4)
 	parser.add_argument('--linestyle', type=str, nargs='?',
 				help='pyplot linestyle per plot, for e.g. " : -. -- -"')
 	args = parser.parse_args()

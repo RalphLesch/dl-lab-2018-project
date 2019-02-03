@@ -39,9 +39,10 @@ flags.DEFINE_string("IoU_filename", "testIoU.txt", "Nane to save the IoU and Ite
 flags.DEFINE_integer("configuration", 4, "Set of configurations decoder [default is 4 - full decoder], other options are [1,2,3]")
 flags.DEFINE_boolean("Save_Segmentation", False, "Save the segmentation masks that are predicted by the network as .npy file")
 flags.DEFINE_string("Seg_filename", "seg_prediction.npy", "Name to save the .npy file with predicted segmentations")
+flags.DEFINE_string("test_dir", "", "Directory name to save test files - defaults to model_path")
+flags.DEFINE_boolean("reverse_colors", False, "Reverse the channels of the test images from bgr to rgb")
 
 FLAGS = flags.FLAGS
-
 
 #  python  Test_Net.py --model_path=./checkpoints/ultraslim --version_net=FCN_Seg --dataset=CamVid --numberClasses=12 --lower_iter=30000 --higher_iter=40000
 
@@ -70,8 +71,11 @@ def main():
 		#sess.run(initializer)
 
 		#Create text file
-		name = FLAGS.model_path + '/' + FLAGS.IoU_filename
-		seg_name = FLAGS.model_path + '/' + FLAGS.Seg_filename
+		output_path = FLAGS.test_dir if FLAGS.test_dir else FLAGS.model_path
+		name = os.path.join(output_path, FLAGS.IoU_filename)
+		seg_name = os.path.join(output_path, FLAGS.Seg_filename)
+		if not os.path.exists(output_path):
+			os.makedirs(output_path)
 		f= open(name,"w+")
 
 		number_of_iter = int((FLAGS.higher_iter - FLAGS.lower_iter) / 1000) + 1
@@ -107,7 +111,7 @@ def main():
 				segmentationMask_flat = segmentationMask.reshape(FLAGS.img_height*FLAGS.img_width)
 				segmentationMask = segmentationMask.reshape(FLAGS.img_height, FLAGS.img_width)
 
-				if FLAGS.Save_Segmentation and test_idx + 1 == imgs.shape[0]:
+				if FLAGS.Save_Segmentation and i + 1 == number_of_iter:
 					final_seg_maps[test_idx] = np.round(segmentationMask)
 
 				label_instance = label[test_idx,:, :].argmax(axis=1)

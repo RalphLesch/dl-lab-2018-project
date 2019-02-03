@@ -46,11 +46,16 @@ def plot(args):
 	if not args.labels:
 		args.labels = (False for f in args.file)
 	
+	if not args.linestyle:
+		args.linestyle = (False for f in args.file)
+	else:
+		args.linestyle = args.linestyle.strip().split(' ')
+	
 	if args.color and args.merge:
 		for x in range(args.color):
 			plt.plot([], [])
 	
-	for i, (file, title, label) in enumerate(zip(args.file, args.title, args.labels)):
+	for i, (file, title, label, linestyle) in enumerate(zip(args.file, args.title, args.labels, args.linestyle)):
 		if not os.path.exists(file):
 			print(file + ' not found!')
 			continue
@@ -60,7 +65,10 @@ def plot(args):
 			print(e)
 			continue
 		
-		extra = {'label': label} if label else {}
+		extra = {}
+		if label: extra['label'] = label
+		if linestyle: extra['linestyle'] = linestyle
+		
 		if args.merge:
 			print('adding {} as {}'.format(file, label))
 			plt.plot(*data, **extra)
@@ -93,7 +101,11 @@ def plot(args):
 				plt.show()
 	if args.merge:
 		#plt.legend()
-		plt.legend(bbox_to_anchor=(1.04,1), loc="upper left")  # CUSTOM: outer top right
+		if args.legendbelow:
+			# Put a legend below current axis
+			plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.11), ncol=args.legendbelow)
+		else:
+			plt.legend(loc='upper left', bbox_to_anchor=(1.04, 1))
 		
 		plt.ylabel(args.ylabel)
 		plt.xlabel(args.xlabel)
@@ -143,6 +155,10 @@ if __name__ == "__main__":
 						help='column index (from 0) of the y data to use (default=1)', default=1)
 	parser.add_argument('--xlim', type=int, nargs=2, metavar=('LEFT', 'RIGHT'),
 						help='x axis limits left and right', default=None)
+	parser.add_argument('--legendbelow', type=int, nargs='?', metavar='NCOLUMNS',
+					help='put legend of merged plots below graph, with NCOLUMNS (default=4)', default=4)
+	parser.add_argument('--linestyle', type=str, nargs='?',
+				help='pyplot linestyle per plot, for e.g. " : -. -- -"')
 	args = parser.parse_args()
 	
 	if args.backend:

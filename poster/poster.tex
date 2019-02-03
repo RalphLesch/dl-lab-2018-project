@@ -10,6 +10,7 @@
 \usepackage[utf8]{inputenc} %unicode support
 \usepackage[T1]{fontenc}
 
+\usepackage{hyperref}
 
 \selectcolormodel{cmyk}
 
@@ -70,13 +71,14 @@ Ralph Lesch and Joshua Heipel
 \vspace{0.1em}\\
 \small{University of Freiburg, Department of Computer Science, Deep Learning Bachelor Project
 \vspace{0.2em}\\
-joshua.heipel@gmx.de}
+ralph.lesch@neptun.uni-freiburg.de  ,  joshua.heipel@gmx.de}
 }
 %{\includegraphics{logo}} % University/lab logo
 
 
 \headerbox{1. Introduction}{name=introduction,column=0,row=0, span=3}{
 Convolutional Neural Networks (CNNs) have become a major aproach for the task of Semantic Segmentation and are nowadays used widely over many different fields of applications. Although for some use cases large datasets with thousands of (manually) labeled images have been published (such as CamVid or CityScape in the context of city traffic), in many situations appropriate training data still remains sparse. As a consequence Deep Neural Networks with lots of trainable parameters tend to overfit small and monotonous datasets while generating poor predictions for new (unseen) observations. In order to improve generalization of such CNNs existing training data can be extended by employing different techniques of image augmentation. 
+\vspace{5px}
 }
 
 
@@ -90,10 +92,8 @@ In our case study we use a hierarchical encoder-decoder network with skip connec
     \item \textbf{Shape Augmentation} by applying different geometric transformation and dropouts (Horizontal Flip, Scaling, Crop and Padding, rectangular Cutouts)
     \item \textbf{Color Augmentation} by varying the intensity values (Adjustment of Brightness and Contrast, Color shifts)
     \item \textbf{Shape \& Color Augmentation}
-
-\end{enumerate} 
-
-
+\end{enumerate}
+\vspace{13px}
 }
 
 
@@ -106,7 +106,7 @@ The network is trained on the CamVid dataset which contains 7707 (manually) labe
     \includegraphics[width=0.9\linewidth]{cnn.pdf}
     \captionof{figure}{Configuration (4) with shape \& color augmentations.  90\% of all images are randomly modified and fed into the encoder-decoder network with skip connections.}
 \end{center}
-
+\vspace{13px}
 }
 
 
@@ -123,52 +123,54 @@ To facilitate multiple independent modifications $A_k$ (e.g. cropping and flippi
 %\[P(A_i \cup A_j) = P(A_i) + P(A_j) - P(A_i \cap A_j)\] \[= 2\cdot P(A_i) - P(A_i)^2\] or in more general form: 
 \[P\left(\bigcup_{k=1}^{n} A_k\right) = \sum_{k=1}^{n} (-1)^{(k+1)} \begin{pmatrix} n \\ k \\\end{pmatrix}P(A_k)^k,\]
 which randomly selects different types of augmentations in varying order. We use the same probability for shape or color modification when investigating setting (4). Because of storage limitations all augmentations are calculated \textit{"on the fly"} using {\color{darkblue} Python 3.5} together with {\color{darkblue} Numpy}, {\color{darkblue} Scipy} and the {\color{darkblue} Imgaug} package, before feeding the batches into the CNN.
-In order to parametrize shape and color modifications we draw samples from uniform distribution. Upper and lower bounds are adjusted by manually applying augmentations on different images of the CamVid dataset. The range of possible modifications is thereby limited to realistic variations that correspond to natural changes of lightning conditions and scale transformations. Cutout and padding modifications are chosen to cover at most 1/10 resp 1/3 of all pixels.
+In order to parametrize shape and color modifications we draw samples from uniform distribution. Upper and lower bounds are adjusted by manually applying augmentations on different images of the CamVid dataset. The range of possible modifications is thereby limited to realistic variations that correspond to natural changes of lightning conditions and scale transformations. Cutout and padding modifications are chosen to cover at most 1/10 resp. 1/3 of all pixels.
 
-\vspace{20px}
+\vspace{10px}
 
 }
 
 
 \headerbox{5. Results}{name=results,span=2,column=1,below=examples}{ 
 
-
-\begin{minipage}[t]{0.49\textwidth}\centering
-    \vspace{3pt}
-    \includegraphics[width=\linewidth]{prediction.pdf}
-    \captionof{figure}{Images and predicted segmentation maps for the test data. From left: original image and segmentation map, predictions without augmentation, with shape, color, shape \& color augmentations.}
-\end{minipage}\hfill
 \begin{minipage}[t]{0.49\textwidth}\centering
     \vspace{0pt}
-    \includegraphics[width=\linewidth]{result.pdf}
-    \captionof{figure}{Learning curves of both large (I) and small (II) dataset with configurations (1)-(4).}
+    \includegraphics[width=\linewidth, keepaspectratio,trim={0 10px 0 0}, clip]{result.pdf}
+    \captionof{figure}{Learning curves with the Intersections over Union (IoU) of both large (I) and small (II) dataset with configurations (1) - (4).}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\textwidth}\centering
+    \vspace{4pt}
+    \includegraphics[width=\linewidth]{prediction.pdf}
+    \captionof{figure}{Images and predicted segmentation maps for the test data. From left: original image and segmentation map, predictions without augmentation, with shape, color, shape \& color augmentations.}
 \end{minipage}
 \vspace{.5\baselineskip}
 
-We observe a different performance of the network for configurations (1) - (4) when trained either on the small or on the full dataset. If a large amount of data is available (I), the learning curves show similar trajectories. With sparse training data (II) randomly applied augmentations have a positive effect on the quality of network predictions. Here we see the color augmentation (3) clearly outperform the shape augmentation (2), which gives no clear improvment.\\
+We observe a different performance of the network for configurations (1) - (4) when trained either on the small or on the full dataset. If a large amount of data is available (I), the learning curves show similar trajectories. With sparse training data (II) randomly applied augmentations have a positive effect on the quality of network predictions. Here we see the color augmentation (3) clearly outperform the shape augmentation (2), which gives no clear improvement.\\
 However the gain in performance is not enough to achieve results that are as accurate as with a larger and more variable dataset.
 \vspace{10px}
 }
 
 
-\headerbox{6. Conclusions}{name=conclusion,column=1,below=results,span=2,above=bottom}{
+\headerbox{6. Conclusions}{name=conclusion,column=0,below=training,span=2,above=bottom}{
 
 \begin{itemize}
-    \item Random modifications applied on sparse datasets can improve performance of CNNs
-    \item Color augmentation (3) results in better performance than shape augmentation (2).
-    \item Parameters for different augmentations must be chosen carefully to have the best positive effects and might be optimized with hyperparameter optimization methods
+    \item Random modifications applied on sparse datasets can improve performance of CNNs.
+    \item Color augmentation (3) results in a better performance than shape augmentation (2).
+    \item Parameters for different augmentations must be chosen carefully to have the best positive effects and might be optimized with hyperparameter optimization methods.
 \end{itemize}
 
 }
 
 
-\headerbox{7. References}{name=references,column=0,span=1,below=training,above=bottom}{
-
+\headerbox{7. References}{name=references,column=2,span=1,below=results,above=bottom}{
 
 %\small % Reduce the font size in this block
 \renewcommand{\section}[2]{\vskip 0.05em} % Get rid of the default "References" section title
 %\nocite{*} % Insert publications even if they are not cited in the poster
 
+\begin{itemize}
+    \item Source:\\ github.com/RalphLesch/dl-lab-2018-project
+    \item Network based on exercise3\_CV\_ML:\\ github.com/aisrobots/dl-lab-2018
+\end{itemize}
 
 %\bibliographystyle{unsrt}
 %\bibliography{poster} % Use sample.bib as the bibliography file

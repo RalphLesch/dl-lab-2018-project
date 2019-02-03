@@ -70,6 +70,8 @@ def plot(args):
 		if linestyle: extra['linestyle'] = linestyle
             
 		if args.merge:
+			if i > 0 and args.reset_color_index and (i % args.reset_color_index) == 0:
+				plt.gca().set_prop_cycle(None)
 			print('adding {} as {}'.format(file, label))
 			plt.plot(*data, **extra)
 		else:
@@ -150,6 +152,8 @@ if __name__ == "__main__":
 						help='labels for in a merge plot')
 	parser.add_argument('-c', '--color', type=int, nargs='?',
 						help='preserve the color in single plots like in merged plot, starting with COLOR_INDEX', metavar='COLOR_INDEX', default=0)
+	parser.add_argument('-r', '--reset-color-index', type=int, dest='reset_color_index',
+						help='reset the color cycle after N_PLOTS', metavar='N_PLOTS')
 	parser.add_argument('-b', '--backend', type=str, help='use different matplotlib backend')
 	parser.add_argument('--ydataindex', type=int, nargs='?',
 						help='column index (from 0) of the y data to use (default=1)', default=1)

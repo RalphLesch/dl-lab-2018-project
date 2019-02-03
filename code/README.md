@@ -1,5 +1,7 @@
 # Augmentation parameter search and semantic segmentation with fully convolutional networks
 
+Network based on [a solution](https://github.com/RalphLesch/dl-lab-2018/tree/master/exercise3_CV_ML) of [exercise3_CV_ML](https://github.com/aisrobots/dl-lab-2018/tree/master/exercise3_CV_ML) of [dl-lab-2018](https://github.com/aisrobots/dl-lab-2018/)
+
 * For training first download and extract the training and testing data (described at `data/readme.md`)
 
 * Training must be called with `Train_Net.py`

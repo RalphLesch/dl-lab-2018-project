@@ -4,6 +4,7 @@ from matplotlib import cm, pyplot as plt
 import imgaug as ia
 from imgaug import augmenters as iaa
 
+
 class Augmentation(object):
 
 	def __init__(self, seed=1, aug_type=None, probability=0.9):
@@ -60,24 +61,27 @@ class Augmentation(object):
 
 		return iaa.Sequential(seq, random_order=True)
 
-	def np2img(self, np_array):
+	@staticmethod
+	def np2img(np_array):
 		return np.clip(np_array, 0, 255)[None,:,:,:]
 
-	def np2segmap(self, np_array, n_classes=12):
+	@staticmethod
+	def np2segmap(np_array, n_classes=12):
 		segmap = np_array.astype(np.uint8)[:,:,0]
 		return ia.SegmentationMapOnImage(segmap, shape=segmap.shape, nb_classes=n_classes + 1)
 
-	def segmap2np(self, segmap):
+	@staticmethod
+	def segmap2np(segmap):
 		return segmap.get_arr_int().astype(np.float32)[:,:,None]
 
-	def img2np(self, img):
+	@staticmethod
+	def img2np(img):
 		return img[0]
 
 	def augment_img_and_segmap(self, img, segmap):
 
 		if self.type is None:
 			return img, segmap
-
 
 		seq_det = self.seq.to_deterministic()
 		aug_img = seq_det.augment_images(img)
@@ -134,61 +138,3 @@ class Augmentation(object):
 	# 	plot = ia.draw_grid(cells, cols=n)
 	#
 	# 	return plot
-
-	def plot_aug_batch(self, imgs, segmaps, aug_imgs, aug_segmaps, n_classes=12, ncols=12):
-
-		cells = []
-		for img, segmap, aug_img, aug_segmap in zip(imgs, segmaps, aug_imgs, aug_segmaps):
-
-			img = self.np2img(img)[0].astype(np.uint8)
-			aug_img = self.np2img(aug_img)[0].astype(np.uint8)
-
-			segmap = self.np2segmap(segmap, n_classes)
-			aug_segmap = self.np2segmap(aug_segmap, n_classes)
-
-			cells.append(img)
-			# cells.append(segmap.draw(size=aug_img.shape[:2]))
-			cells.append(segmap.draw_on_image(img, alpha=0.5))
-			cells.append(aug_img)
-			cells.append(aug_segmap.draw_on_image(aug_img, alpha=0.5))
-
-		plot = ia.draw_grid(cells, cols=ncols)
-
-		return plot
-
-def rgb_image(np_array, reverse_colors=False, color_range=(0, 255)):
-	'''Converts a numpy array of shape (height, width, 3) into a RGB image.'''
-
-	np_array = np_array.copy()
-
-	n_colors = color_range[1] - color_range[0] + 1
-
-	# normalize colors into range 0 to 1
-	np_array -= color_range[0]
-	np_array /= n_colors
-
-	# flip color channels
-	if reverse_colors:
-		np_array = np_array[:,:,::-1]
-
-	return plt.imshow(np_array)
-
-def class_image(np_array, class_range=(0,12)):
-	'''Converts a numpy array of shape (height, width, 1) into an image with different colors for different classes.'''
-
-	# calculate range of different class labels
-	if class_range is None:
-		class_range = (np.min(np_array), np.max(np_array))
-
-	n_classes = class_range[1] - class_range[0] + 1
-
-	np_array = np_array.copy()
-
-	# normalize classes into range 0 to 1
-	np_array -= class_range[0]
-	np_array /= n_classes
-
-	# define colormap to distinguish different classes
-	colormap = cm.get_cmap(name='nipy_spectral', lut=n_classes).reversed()
-
-	return plt.imshow(np_array[:,:,0], cmap=colormap)

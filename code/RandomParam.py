@@ -4,6 +4,7 @@
 import numpy as np
 from scipy import stats
 
+
 class RandomParam(object):
 
 	def __init__(self, seed=None):

@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{enumitem}
 \usepackage{xcolor}
+\usepackage{caption}
 
 \usepackage[utf8]{inputenc} %unicode support
 \usepackage[T1]{fontenc}
@@ -61,11 +62,9 @@ linewidth=2pt % Width of the border lines around content boxes
 %
 {
 \textsf %Sans Serif
-{Comparison of different techniques for image augmentation.
+{Evaluation of different techniques for image augmentation.
 }
-} % Poster title
-% {\vspace{1em} Marta Stepniewska, Pawel Siedlecki\\ % Author names
-% {\small \vspace{0.7em} Department of Bioinformatics, Institute of Biochemistry and Biophysics, PAS, Warsaw, Pawinskiego 5a}} % Author email addresses
+}
 {\sf\vspace{0.5em}\\
 Ralph Lesch and Joshua Heipel
 \vspace{0.1em}\\
@@ -83,88 +82,83 @@ Convolutional Neural Networks (CNNs) have become a major aproach for the task of
 
 \headerbox{2. Architecture}{name=architecture,column=0,below=introduction,span=1}{
 
+
 In our case study we use a hierarchical encoder-decoder network with skip connections (CNN of exercise 3) to compare different settings:
 
 \begin{enumerate}[label={(\arabic*)}]
     \item \textbf{No Augmentation}
     \item \textbf{Shape Augmentation} by applying different geometric transformation and dropouts (Horizontal Flip, Scaling, Crop and Padding, rectangular Cutouts)
     \item \textbf{Color Augmentation} by varying the intensity values (Adjustment of Brightness and Contrast, Color shifts)
-    \item \textbf{Shape and Color Augmentation}
+    \item \textbf{Shape \& Color Augmentation}
+
 \end{enumerate} 
 
 
-
-\begin{center}
-%    \includegraphics[width=\linewidth]{phar}
-\end{center}
-%\vspace{-2pt}
 }
+
 
 
 \headerbox{3. Training}{name=training,column=0,below=architecture,span=1}{
 
-The network is trained on CamVid dataset, which contains ???? different labeled images. To allow for a fair comparison between the 4 different configurations, we use the same hyperparameters (namely the total amount of iterations and batch size) for all types of augmentation. Batches are created by sampling images from the original dataset with pseudo-random numbers and then applying augmentations for setting (2) - (4) on 90\% of the images. To facilitate multiple independent modifications $A_k$ (e.g. cropping and flipping an image) we implemented our own probabilistic framework based on the principle of inclusion and exclusion, where:
-%\[P(A_i \cup A_j) = P(A_i) + P(A_j) - P(A_i \cap A_j)\] \[= 2\cdot P(A_i) - P(A_i)^2\] or in more general form: 
-\[P\left(\bigcup_{k=1}^{n} A_k\right) = \sum_{k=1}^{n} (-1)^{(k+1)} \begin{pmatrix} n \\ k \\\end{pmatrix}P(A_k)^k,\]
-which randomly selects different types of augmentations in varying order. We use the same probability for shape or color modification when investigating setting (4). Because of storage limitations all augmentations are calculated \textit{"on the fly"} using {\color{darkblue} Python 3.?} together with the {\color{darkblue} Numpy}, {\color{darkblue} Scipy}, {\color{darkblue} OpenCV} and {\color{darkblue} Scikit-Image} packages, before feeding them into the CNN.
+The network is trained on the CamVid dataset which contains 7707 (manually) labeled images. To allow for a fair comparison between our different configurations (1) - (4), we use the same hyperparameters (namely the total amount of iterations and batch size) for all types of augmentations. Batches are created by sampling images from the original dataset with pseudo-random numbers and then applying augmentations for setting (2) - (4) on 90\% of the images. In order to investigate the effect of applying augmentation on sparse data we train the network (I) on the full dataset and (II) with a small subset of 468 images.
+
+\begin{center}
+    \includegraphics[width=0.9\linewidth]{cnn.pdf}
+    \captionof{figure}{Configuration (4) with shape \& color augmentations.  90\% of all images are randomly modified and fed into the encoder-decoder network with skip connections.}
+\end{center}
+
 }
 
 
-\headerbox{4. Examples}{name=examples,span=2,column=1,below=introduction}{ % To reduce this block to 1 column width, remove 'span=2'
+\headerbox{4. Examples}{name=examples,span=2,column=1,below=introduction}{ 
 
-\begin{wrapfigure}{l}{0.8\textwidth}
+\begin{wrapfigure}{l}{0.45\textwidth}
     \begin{center}
-        \includegraphics[width=\linewidth]{aug_hack_example1.pdf}
-        \caption{Different types of augmentation applied to a single image. From left to right: original image, orignal segmentation map, augmented image, augmented segmentation map.}
+        \includegraphics[width=0.8\linewidth]{augmentation.pdf}
+        \caption{Different types of augmentations. From left: original image,  original segmentation map, augmented image and augmented segmentation map.}
     \end{center}
 \end{wrapfigure}
 
-In order to parametrize shape and color modifications we draw samples from different types of distribution (uniform distribution, truncated normal distribution and truncated exponential distribution) depending on the type of augmentation. Hyperparameters (scale and marginal values of the distributions) are adjusted by manually applying random augmentations on some arbitrary images of the CamVid dataset. The range of possible modifications is thereby limited to realistic variations that correspond to natural changes of lightning conditions and scale transformations. Cutout and cropping operations are chosen to cover at most 1/4 of all pixels.
+To facilitate multiple independent modifications $A_k$ (e.g. cropping and flipping an image) we implemented our own probabilistic framework based on the principle of inclusion and exclusion, where:
+%\[P(A_i \cup A_j) = P(A_i) + P(A_j) - P(A_i \cap A_j)\] \[= 2\cdot P(A_i) - P(A_i)^2\] or in more general form: 
+\[P\left(\bigcup_{k=1}^{n} A_k\right) = \sum_{k=1}^{n} (-1)^{(k+1)} \begin{pmatrix} n \\ k \\\end{pmatrix}P(A_k)^k,\]
+which randomly selects different types of augmentations in varying order. We use the same probability for shape or color modification when investigating setting (4). Because of storage limitations all augmentations are calculated \textit{"on the fly"} using {\color{darkblue} Python 3.5} together with {\color{darkblue} Numpy}, {\color{darkblue} Scipy} and the {\color{darkblue} Imgaug} package, before feeding the batches into the CNN.
+In order to parametrize shape and color modifications we draw samples from uniform distribution. Upper and lower bounds are adjusted by manually applying augmentations on different images of the CamVid dataset. The range of possible modifications is thereby limited to realistic variations that correspond to natural changes of lightning conditions and scale transformations. Cutout and padding modifications are chosen to cover at most 1/10 resp 1/3 of all pixels.
 
-%\vspace{-5pt}
-%\begin{center}
-%    \includegraphics[width=0.85\linewidth]{screen}
-%\end{center}
+\vspace{20px}
+
 }
 
 
-\headerbox{5. Results}{name=results,span=2,column=1,below=examples}{ % To reduce this block to 1 column width, remove 'span=2'
+\headerbox{5. Results}{name=results,span=2,column=1,below=examples}{ 
 
 
+\begin{minipage}[t]{0.49\textwidth}\centering
+    \vspace{3pt}
+    \includegraphics[width=\linewidth]{prediction.pdf}
+    \captionof{figure}{Images and predicted segmentation maps for the test data. From left: original image and segmentation map, predictions without augmentation, with shape, color, shape \& color augmentations.}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\textwidth}\centering
+    \vspace{0pt}
+    \includegraphics[width=\linewidth]{result.pdf}
+    \captionof{figure}{Learning curves of both large (I) and small (II) dataset with configurations (1)-(4).}
+\end{minipage}
+\vspace{.5\baselineskip}
 
-%\begin{wrapfigure}{l}{\textwidt}
-%    \includegraphics[width=0.7\linewidth]{figures/aug_hack_example1}
-%\end{wrapfigure}
-
-
-
- We tested DeCAF in 35 case studies taken from the DUD-E database, to evaluate its power to discriminate between active and inactive molecules.
- We used DeCAF as a classifier and compared it to the SEA (Similarity Ensemble Approach) algorithm \cite{keiser2007relating}.
- To compare sets of ligands, we adapted the approach used in SEA, replacing Tc by DCAF.
- We prepared datasets as shown in the left diagram.
- Then, we tested both classifiers calculating ROC AUC values for every target (below).
-%We tested DeCAF in 35 diverse targets taken from the DUD-E database, to evaluate its power to classify molecules as active or inactive.
-%We compared DeCAF to the renowned \textbf{SEA (Similarity Ensemble Approach)} algorithm \cite{keiser2007relating}, which uses Tc as a similarity measure.
-%Dataset preparation steps are shown on the left diagram.
-%Comparison results (\textbf{ROC AUC} values for each receptor) are shown below.
-% Please ask me about details.
-
-%\hspace{0pt}\includegraphics[width=0.95\linewidth]{res}
-
+We observe a different performance of the network for configurations (1) - (4) when trained either on the small or on the full dataset. If a large amount of data is available (I), the learning curves show similar trajectories. With sparse training data (II) randomly applied augmentations have a positive effect on the quality of network predictions. Here we see the color augmentation (3) clearly outperform the shape augmentation (2), which gives no clear improvment.\\
+However the gain in performance is not enough to achieve results that are as accurate as with a larger and more variable dataset.
+\vspace{10px}
 }
 
 
 \headerbox{6. Conclusions}{name=conclusion,column=1,below=results,span=2,above=bottom}{
-% DeCAF is a chemoinformatical tool that can be helpful in ligand-based drug design.
-% It provides a comprehensive molecule description and a fast algorithms for comparing and aligning multiple ligands.
-%We proved that DeCAF is a significant improvement over the SEA algorithm, a popular method for comparing sets of ligands.
-%\begin{boenumerate}\compresslist
-%    \item DeCAF gives better results for 23 out of 35 receptors.
-%    \item For targets with easily separable active and inactive datasets, SEA and DeCAF give similar results.
-%    \item In cases in which SEA fails to identify active molecules, our method performs substantially better.
-%\end{boenumerate}
-% It can be also used in other [procedures], such as database screening or drug repositioning.
-% DeCAF is written in Python and freely available at \textbf{\color{darkgreen}http://bitbucket.org/marta-sd/decaf}. 
+
+\begin{itemize}
+    \item Random modifications applied on sparse datasets can improve performance of CNNs
+    \item Color augmentation (3) results in better performance than shape augmentation (2).
+    \item Parameters for different augmentations must be chosen carefully to have the best positive effects and might be optimized with hyperparameter optimization methods
+\end{itemize}
+
 }
 
 

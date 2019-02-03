@@ -5,6 +5,7 @@ import cv2 as cv
 from skimage import exposure, color, img_as_float
 from RandomParam import RandomParam
 
+
 class Augmentation(object):
 
 	def __init__(self, aug_type=None, probability=0.9, seed=None):

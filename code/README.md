@@ -1,4 +1,4 @@
-# Computer Vision Project - Augmentation parameter search and semantic segmentation with fully convolutional networks
+# Augmentation parameter search and semantic segmentation with fully convolutional networks
 
 * For training first download and extract the training and testing data (described at `data/readme.md`)
 
